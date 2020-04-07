@@ -46,6 +46,12 @@ public class Dependency {
 	private final String type;
 
 	private final Set<Exclusion> exclusions;
+	
+	private final String systemPath;
+
+	public String getSystemPath() {
+		return systemPath;
+	}
 
 	protected Dependency(Builder<?> builder) {
 		this.groupId = builder.groupId;
@@ -55,6 +61,7 @@ public class Dependency {
 		this.classifier = builder.classifier;
 		this.type = builder.type;
 		this.exclusions = new LinkedHashSet<>(builder.exclusions);
+		this.systemPath = builder.systemPath;
 	}
 
 	/**
@@ -70,6 +77,11 @@ public class Dependency {
 	public static Builder<?> withCoordinates(String groupId, String artifactId, String version) {
 		return new Builder<>(groupId, artifactId,version);
 	}
+	
+	public static Builder<?> withCoordinates(String groupId, String artifactId, String version, String systemPath) {
+		return new Builder<>(groupId, artifactId,version,systemPath);
+	}
+
 
 	/**
 	 * Initialize a new dependency {@link Builder} with the state of the specified
@@ -160,6 +172,8 @@ public class Dependency {
 		private String classifier;
 
 		private Set<Exclusion> exclusions = new LinkedHashSet<>();
+		
+		private String systemPath;
 
 		protected Builder(String groupId, String artifactId) {
 			this.groupId = groupId;
@@ -171,9 +185,16 @@ public class Dependency {
 			this.artifactId = artifactId;
 			this.version = VersionReference.ofValue(version);
 		}
-
-		public B groupId(String groupId) {
+		
+		protected Builder(String groupId, String artifactId, String version, String systemPath) {
 			this.groupId = groupId;
+			this.artifactId = artifactId;
+			this.version = VersionReference.ofValue(version);
+			this.systemPath = systemPath;
+		}
+
+		public B systemPath(String systemPath) {
+			this.systemPath = systemPath;
 			return self();
 		}
 
@@ -199,6 +220,11 @@ public class Dependency {
 
 		public B type(String type) {
 			this.type = type;
+			return self();
+		}
+		
+		public B groupId(String groupId) {
+			this.groupId = groupId;
 			return self();
 		}
 

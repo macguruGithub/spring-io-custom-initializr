@@ -27,6 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.util.ObjectUtils;
+
 import io.spring.initializr.generator.buildsystem.BillOfMaterials;
 import io.spring.initializr.generator.buildsystem.Dependency;
 import io.spring.initializr.generator.buildsystem.Dependency.Exclusion;
@@ -44,8 +46,6 @@ import io.spring.initializr.generator.buildsystem.maven.MavenPlugin.Setting;
 import io.spring.initializr.generator.io.IndentingWriter;
 import io.spring.initializr.generator.version.VersionProperty;
 import io.spring.initializr.generator.version.VersionReference;
-
-import org.springframework.util.ObjectUtils;
 
 /**
  * A {@link MavenBuild} writer for {@code pom.xml}.
@@ -204,6 +204,8 @@ public class MavenBuildWriter {
 			writeDependencies(writer, dependencies, hasScope(DependencyScope.PROVIDED_RUNTIME));
 			writeDependencies(writer, dependencies,
 					hasScope(DependencyScope.TEST_COMPILE, DependencyScope.TEST_RUNTIME));
+			writeDependencies(writer, dependencies,
+					hasScope(DependencyScope.SYSTEM, DependencyScope.SYSTEM));
 		});
 	}
 
@@ -225,6 +227,8 @@ public class MavenBuildWriter {
 			writeSingleElement(writer, "artifactId", dependency.getArtifactId());
 			writeSingleElement(writer, "version", determineVersion(dependency.getVersion()));
 			writeSingleElement(writer, "scope", scopeForType(dependency.getScope()));
+			if("ojdbc6".equals(dependency.getArtifactId()))
+				writeSingleElement(writer, "systemPath", "${project.basedir}/lib/ojdbc6-11.2.0.3.jar");
 			writeSingleElement(writer, "classifier", dependency.getClassifier());
 			if (isOptional(dependency)) {
 				writeSingleElement(writer, "optional", Boolean.toString(true));
@@ -260,6 +264,8 @@ public class MavenBuildWriter {
 			return "test";
 		case TEST_RUNTIME:
 			return "test";
+		case SYSTEM:
+			return "system";
 		default:
 			throw new IllegalStateException("Unrecognized dependency type '" + type + "'");
 		}

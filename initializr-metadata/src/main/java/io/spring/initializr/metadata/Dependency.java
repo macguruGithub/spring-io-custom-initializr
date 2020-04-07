@@ -70,12 +70,17 @@ public class Dependency extends MetadataElement implements Describable {
 	 * Test Scope.
 	 */
 	public static final String SCOPE_TEST = "test";
+	
+	/**
+	 * System Scope.
+	 */
+	public static final String SCOPE_SYSTEM = "system";
 
 	/**
 	 * All scope types.
 	 */
 	public static final List<String> SCOPE_ALL = Collections.unmodifiableList(Arrays.asList(SCOPE_COMPILE,
-			SCOPE_RUNTIME, SCOPE_COMPILE_ONLY, SCOPE_ANNOTATION_PROCESSOR, SCOPE_PROVIDED, SCOPE_TEST));
+			SCOPE_RUNTIME, SCOPE_COMPILE_ONLY, SCOPE_ANNOTATION_PROCESSOR, SCOPE_PROVIDED, SCOPE_TEST,SCOPE_SYSTEM));
 
 	private List<String> aliases = new ArrayList<>();
 

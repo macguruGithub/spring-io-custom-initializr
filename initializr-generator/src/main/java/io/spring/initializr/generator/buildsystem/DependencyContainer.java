@@ -44,6 +44,10 @@ public class DependencyContainer extends BuildItemContainer<String, Dependency> 
 	public void add(String id, String groupId, String artifactId, DependencyScope scope, String version) {
 		add(id, Dependency.withCoordinates(groupId, artifactId, version).scope(scope));
 	}
+	
+	public void add(String id, String groupId, String artifactId, DependencyScope scope, String version, String systemPath) {
+		add(id, Dependency.withCoordinates(groupId, artifactId, version, systemPath).scope(scope));
+	}
 
 	/**
 	 * Register a {@link Dependency} with the specified {@code id} and

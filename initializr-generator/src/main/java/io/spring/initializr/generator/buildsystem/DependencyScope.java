@@ -56,6 +56,10 @@ public enum DependencyScope {
 	/**
 	 * A dependency this is used to run a project's tests.
 	 */
-	TEST_RUNTIME
+	TEST_RUNTIME,
+	/**
+	 * A dependency this is used to run in system scope.
+	 */
+	SYSTEM
 
 }

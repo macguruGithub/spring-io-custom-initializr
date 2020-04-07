@@ -64,6 +64,8 @@ public final class MetadataBuildItemMapper {
 			return DependencyScope.PROVIDED_RUNTIME;
 		case Dependency.SCOPE_TEST:
 			return DependencyScope.TEST_COMPILE;
+		case Dependency.SCOPE_SYSTEM:
+			return DependencyScope.SYSTEM;
 		}
 		return null;
 	}

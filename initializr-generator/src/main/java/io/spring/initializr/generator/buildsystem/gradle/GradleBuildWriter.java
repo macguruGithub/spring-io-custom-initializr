@@ -130,6 +130,7 @@ public abstract class GradleBuildWriter {
 		sortedDependencies.addAll(filterDependencies(dependencies, hasScope(DependencyScope.PROVIDED_RUNTIME)));
 		sortedDependencies.addAll(filterDependencies(dependencies, hasScope(DependencyScope.TEST_COMPILE)));
 		sortedDependencies.addAll(filterDependencies(dependencies, hasScope(DependencyScope.TEST_RUNTIME)));
+		sortedDependencies.addAll(filterDependencies(dependencies, hasScope(DependencyScope.SYSTEM)));
 		if (!sortedDependencies.isEmpty()) {
 			writer.println();
 			writer.println("dependencies" + " {");
@@ -170,6 +171,8 @@ public abstract class GradleBuildWriter {
 			return "testImplementation";
 		case TEST_RUNTIME:
 			return "testRuntimeOnly";
+		case SYSTEM:
+			return "system";
 		default:
 			throw new IllegalStateException("Unrecognized dependency type '" + type + "'");
 		}
