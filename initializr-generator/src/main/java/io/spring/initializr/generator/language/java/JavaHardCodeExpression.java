@@ -60,5 +60,57 @@ public class JavaHardCodeExpression extends JavaStatement {
 			data.put("errorHandler", "return new RedisCacheErrorHandler()");
 		}
 	}
+	
+	static class MessageSourceUtilData{
+		public static Map<String,String> data;
+		
+		static {
+			data = new HashMap<>();
+			
+			data.put("setMessageSource", "this.messageSource = messageSource");
+			data.put("getLocalisedText", "return messageSource.getMessage(\r\n" + 
+					"		baseKey + module + errorSeperator + errorCode + errorSeperator + errorMessage,\r\n" +
+					"		new Object[0], LocaleContextHolder.getLocale())");
+			
+		}
+	}
 
+	static class GlobalExceptionHandler{
+		public static Map<String,String> data;
+		
+		static {
+			data = new HashMap<>();
+						
+			data.put("handleApplicationException", "BaseException e = (BaseException) ex;\r\n" + 
+					"		logger.error(\"ApplicationException Occured:: URL=\" + request.getDescription(true));\r\n" +
+					"		logger.error(\"ApplicationException Occured::\" + ex);\r\n" +
+					"		return getCustomExceptionResponse(request, e)");
+			data.put("handleBusinessException", "BaseException e = (BaseException) ex;\r\n" + 
+					"		logger.error(\"BusinessException Occured:: URL=\" + request.getDescription(true));\r\n" +
+					"		logger.error(\"BusinessException Occured::\" + ex);\r\n" +
+					"		return getCustomExceptionResponse(request, e)");
+			data.put("handleException", "BaseException e = new BaseException(HttpStatus.INTERNAL_SERVER_ERROR, ExceptionConstants.GENERAL_ERROR_CODE,\r\n" + 
+					"		ExceptionConstants.GENERAL_MODULE, \"RuntimeException :: \" + ex.getMessage());\r\n" +
+					"		logger.error(\"Exception Occured:: URL=\" + request.getDescription(true));\r\n" +
+					"		logger.error(\"Exception Occured::\" + ex);\r\n" +
+					"		return getCustomExceptionResponse(request, e)");
+			data.put("getCustomExceptionResponse", "String errorCode = ex.getErrorCode();\r\n" + 
+					"		String exceptionMessage = ex.getExceptionMessage();\r\n" +
+					"		String timeStamp = ex.getTimeStamp();\r\n" +
+					"		String errorModule = ex.getErrorModule();\r\n" +
+					"		String errorMessage = \"\";\r\n" +
+					"		Integer id = RandomUtils.nextInt(10000, 50000);\r\n" +
+					"		try {\r\n" +
+					"		errorMessage = messageSourceUtil.getLocalisedText(errorCode, errorModule);\r\n" +
+					"		} catch (Exception e) {\r\n" +
+					"		errorMessage = messageSourceUtil.getLocalisedText(ExceptionConstants.GENERAL_ERROR_CODE,\r\n" +
+					"		ExceptionConstants.GENERAL_MODULE);\r\n" +
+					"		exceptionMessage = \"The message for errorCode:\" + errorCode + \" module:\" + errorModule\r\n" +
+					"		+ \" is not found in prop file\";\r\n" +
+					"		}\r\n" +
+					"		HttpStatus status = ex.getHttpStatus();\r\n" +					
+					"		return new ResponseEntity<>(new ApiError(id, errorMessage, errorCode, timeStamp, exceptionMessage), status)");
+			
+		}
+	}
 }

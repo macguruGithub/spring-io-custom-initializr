@@ -238,6 +238,12 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 		if("redis".equalsIgnoreCase(method.getFeatureName())) {
 			writer.print(JavaHardCodeExpression.RedisData.data.get(method.getName()));
 		}
+		if("messageSourceUtil".equalsIgnoreCase(method.getFeatureName())) {
+			writer.print(JavaHardCodeExpression.MessageSourceUtilData.data.get(method.getName()));
+		}
+		if("globalExceptionHandler".equalsIgnoreCase(method.getFeatureName())) {
+			writer.print(JavaHardCodeExpression.GlobalExceptionHandler.data.get(method.getName()));
+		}
 	}
 
 	private void writeModifiers(IndentingWriter writer, Map<Predicate<Integer>, String> availableModifiers,

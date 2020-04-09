@@ -28,6 +28,12 @@ import io.spring.initializr.generator.language.TypeDeclaration;
 import io.spring.initializr.generator.packaging.war.WarPackaging;
 import io.spring.initializr.generator.project.ProjectDescription;
 import io.spring.initializr.generator.project.ProjectGenerationConfiguration;
+import io.spring.initializr.generator.spring.code.custom.ExceptionConstantsContributor;
+import io.spring.initializr.generator.spring.code.custom.ExceptionConstantsCustomizer;
+import io.spring.initializr.generator.spring.code.custom.GlobalExceptionHandlerContributor;
+import io.spring.initializr.generator.spring.code.custom.GlobalExceptionHandlerCustomizer;
+import io.spring.initializr.generator.spring.code.custom.MessageSourceUtilContributor;
+import io.spring.initializr.generator.spring.code.custom.MessageSourceUtilCustomizer;
 import io.spring.initializr.generator.spring.code.custom.RedisContributor;
 import io.spring.initializr.generator.spring.code.custom.RedisCustomizer;
 import io.spring.initializr.generator.spring.code.custom.SwaggerContributor;
@@ -113,7 +119,6 @@ public class SourceCodeProjectGenerationConfiguration {
 					"org.springframework.web.servlet.config.annotation.WebMvcConfigurer", swaggerCustomizers);
 		}
 
-
 	}
 	
 	@Configuration
@@ -133,7 +138,62 @@ public class SourceCodeProjectGenerationConfiguration {
 					"org.springframework.cache.annotation.CachingConfigurer", "org.springframework.cache.annotation.CachingConfigurerSupport", redisCustomizers);
 		}
 
-
 	}	
+	
+	@Configuration
+	@ConditionalOnRequestedDependency("exception-id")
+	static class MessageSourceUtilConfiguration {
+
+		private final ProjectDescription description;
+
+		MessageSourceUtilConfiguration(ProjectDescription description) {
+			this.description = description;
+		}
+
+		@Bean
+		MessageSourceUtilContributor messageSourceUtilContributor(
+				ObjectProvider<MessageSourceUtilCustomizer<?>> messageSourceUtilCustomizers) {
+			return new MessageSourceUtilContributor(this.description.getPackageName(),
+					"org.springframework.context.MessageSourceAware", messageSourceUtilCustomizers);
+		}
+
+	}
+	
+	@Configuration
+	@ConditionalOnRequestedDependency("exception-id")
+	static class ExceptionConstantsConfiguration {
+
+		private final ProjectDescription description;
+
+		ExceptionConstantsConfiguration(ProjectDescription description) {
+			this.description = description;
+		}
+
+		@Bean
+		ExceptionConstantsContributor exceptionConstantsContributor(
+				ObjectProvider<ExceptionConstantsCustomizer<?>> exceptionConstantsCustomizers) {
+			return new ExceptionConstantsContributor(this.description.getPackageName(), exceptionConstantsCustomizers);
+		}
+
+	}
+	
+	@Configuration
+	@ConditionalOnRequestedDependency("exception-id")
+	static class GlobalExceptionHandlerConfiguration {
+
+		private final ProjectDescription description;
+
+		GlobalExceptionHandlerConfiguration(ProjectDescription description) {
+			this.description = description;
+		}
+
+		@Bean
+		GlobalExceptionHandlerContributor globalExceptionHandlerContributor(
+				ObjectProvider<GlobalExceptionHandlerCustomizer<?>> globalExceptionHandlerCustomizers) {
+			return new GlobalExceptionHandlerContributor(this.description.getPackageName(),
+					"org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler", globalExceptionHandlerCustomizers);
+		}
+
+	}
 
 }

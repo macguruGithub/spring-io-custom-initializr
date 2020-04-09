@@ -42,6 +42,9 @@ import io.spring.initializr.generator.spring.code.CustomApplicationTypeCustomize
 import io.spring.initializr.generator.spring.code.MainApplicationTypeCustomizer;
 import io.spring.initializr.generator.spring.code.ServletInitializerCustomizer;
 import io.spring.initializr.generator.spring.code.TestApplicationTypeCustomizer;
+import io.spring.initializr.generator.spring.code.custom.ExceptionConstantsCustomizer;
+import io.spring.initializr.generator.spring.code.custom.GlobalExceptionHandlerCustomizer;
+import io.spring.initializr.generator.spring.code.custom.MessageSourceUtilCustomizer;
 import io.spring.initializr.generator.spring.code.custom.RedisCustomizer;
 import io.spring.initializr.generator.spring.code.custom.SwaggerCustomizer;
 
@@ -333,6 +336,185 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				imports.add("org.springframework.data.redis.connection.jedis.JedisConnectionFactory");
 				imports.add("org.springframework.data.redis.core.RedisTemplate");
 				imports.add("org.springframework.data.redis.serializer.GenericToStringSerializer");
+				t.setImports(imports);
+			};
+		}
+	}
+	
+	@Configuration
+	@ConditionalOnRequestedDependency("exception-id")
+	static class MessageSourceUtilConfiguration{
+		
+		@Bean
+		MessageSourceUtilCustomizer<JavaTypeDeclaration> setMessageSourceCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PRIVATE);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("setMessageSource")
+						.modifiers(Modifier.PUBLIC)
+						.returning("void")
+						.parameters(new Parameter("org.springframework.context.MessageSource",
+								"messageSource"))
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("java.lang.Override"));
+				configure.setFeatureName(JavaProjectConstants.MESSAGE_SOURCE_UTIL);
+				typeDeclaration.addMethodDeclaration(configure);
+				typeDeclaration.annotate(Annotation.name("org.springframework.stereotype.Component"));
+				addFieldWithoutValue(typeDeclaration,"messageSource","org.springframework.context.MessageSource");
+				addPrivateField(typeDeclaration,"errorBaseKey","\"ERROR_CONFIG\"","java.lang.String");
+				addPrivateField(typeDeclaration,"errorSeperator","\".\"","java.lang.String");
+				addPrivateField(typeDeclaration,"errorMessage","\"message\"","java.lang.String");
+				addPrivateField(typeDeclaration,"baseKey","errorBaseKey + errorSeperator","java.lang.String");
+				
+			};
+		}
+	
+		private void addFieldWithoutValue(JavaTypeDeclaration typeDeclaration,String fieldName, String returnType) {
+			typeDeclaration.addFieldDeclaration(
+					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PRIVATE).returning(returnType));
+		}
+		
+		private void addPrivateField(JavaTypeDeclaration typeDeclaration,String fieldName, String value, String returnType) {
+			typeDeclaration.addFieldDeclaration(
+					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PRIVATE).value(value).returning(returnType));
+		}
+		
+		private void addPublicField(JavaTypeDeclaration typeDeclaration,String fieldName, String value, String returnType) {
+			typeDeclaration.addFieldDeclaration(
+					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PUBLIC).value(value).returning(returnType));
+		}
+		
+		@Bean
+		MessageSourceUtilCustomizer<JavaTypeDeclaration> getLocalisedTextCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("getLocalisedText")
+						.modifiers(Modifier.PUBLIC)
+						.returning("java.lang.String")
+						.parameters(new Parameter("java.lang.String",
+								"errorCode"), new Parameter("java.lang.String", "module"))
+						.body(new JavaHardCodeExpression());
+				configure.setFeatureName(JavaProjectConstants.MESSAGE_SOURCE_UTIL);
+				typeDeclaration.addMethodDeclaration(configure);
+			};
+		}		
+		
+		@Bean
+		MessageSourceUtilCustomizer<JavaTypeDeclaration> loadimports() {
+			return (t) ->{
+				Set<String> imports = new HashSet<>();
+				imports.add("org.springframework.context.MessageSource");
+				imports.add("org.springframework.context.MessageSourceAware");
+				imports.add("org.springframework.context.i18n.LocaleContextHolder");
+				imports.add("org.springframework.stereotype.Component");
+				t.setImports(imports);
+			};
+		}
+		
+		// ExceptionConstants
+		@Bean
+		ExceptionConstantsCustomizer<JavaTypeDeclaration> exceptionConstantsCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				addPublicField(typeDeclaration,"GENERAL_MODULE","\"GENERAL\"","java.lang.String");
+				addPublicField(typeDeclaration,"API_MANAGEMENT","\"API_MANAGEMENT\"","java.lang.String");
+				addPublicField(typeDeclaration,"GENERAL_ERROR_CODE","\"ER_001\"","java.lang.String");
+				addPublicField(typeDeclaration,"INVALID_RESPONSE","\"ER_002\"","java.lang.String");
+				addPublicField(typeDeclaration,"JSESSIONID_NOTFOUND","\"ER_003\"","java.lang.String");
+				
+			};
+		}
+		
+		// GlobalExceptionHandler
+		@Bean
+		GlobalExceptionHandlerCustomizer<JavaTypeDeclaration> handleApplicationException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("handleApplicationException")
+						.modifiers(Modifier.PUBLIC)
+						.returning("org.springframework.http.ResponseEntity<Object>")
+						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
+								"request"), new Parameter("java.lang.Exception", "ex"))
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler"));
+				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
+				typeDeclaration.addMethodDeclaration(configure);
+				typeDeclaration.annotate(Annotation.name("org.springframework.web.bind.annotation.RestControllerAdvice"));
+				
+				//addFieldWithoutValue(typeDeclaration,"messageSourceUtil","org.springframework.context.MessageSource");
+//				addPrivateField(typeDeclaration,"errorBaseKey","\"ERROR_CONFIG\"","java.lang.String");
+				
+			};
+		}
+
+		
+		@Bean
+		GlobalExceptionHandlerCustomizer<JavaTypeDeclaration> handleBusinessException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("handleBusinessException")
+						.modifiers(Modifier.PUBLIC)
+						.returning("org.springframework.http.ResponseEntity<Object>")
+						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
+								"request"), new Parameter("java.lang.Exception", "ex"))
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler"));
+				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
+				typeDeclaration.addMethodDeclaration(configure);
+			};
+		}	
+		
+		@Bean
+		GlobalExceptionHandlerCustomizer<JavaTypeDeclaration> handleException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("handleException")
+						.modifiers(Modifier.PUBLIC)
+						.returning("org.springframework.http.ResponseEntity<Object>")
+						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
+								"request"), new Parameter("java.lang.Exception", "ex"))
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler"));
+				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
+				typeDeclaration.addMethodDeclaration(configure);
+			};
+		}
+		
+		@Bean
+		GlobalExceptionHandlerCustomizer<JavaTypeDeclaration> getCustomExceptionResponse(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("getCustomExceptionResponse")
+						.modifiers(Modifier.PRIVATE)
+						.returning("org.springframework.http.ResponseEntity<Object>")
+						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
+								"request"), new Parameter("java.lang.Exception", "ex"))
+						.body(new JavaHardCodeExpression());
+				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
+				typeDeclaration.addMethodDeclaration(configure);
+			};
+		}	
+		
+		@Bean
+		GlobalExceptionHandlerCustomizer<JavaTypeDeclaration> loadimportsforGlobalExceptionHandler() {
+			return (t) ->{
+				Set<String> imports = new HashSet<>();
+				imports.add("org.apache.commons.lang3.RandomUtils");
+				imports.add("org.slf4j.Logger");
+				imports.add("org.slf4j.LoggerFactory");
+				imports.add("org.springframework.beans.factory.annotation.Autowired");
+				imports.add("org.springframework.http.HttpStatus");
+				imports.add("org.springframework.http.ResponseEntity");
+				imports.add("org.springframework.web.bind.annotation.ExceptionHandler");
+				imports.add("org.springframework.web.bind.annotation.RestControllerAdvice");
+				imports.add("org.springframework.web.context.request.WebRequest");
+				imports.add("org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler");
 				t.setImports(imports);
 			};
 		}
