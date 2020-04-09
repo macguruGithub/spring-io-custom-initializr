@@ -20,7 +20,6 @@ import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,6 +42,7 @@ import io.spring.initializr.generator.spring.code.CustomApplicationTypeCustomize
 import io.spring.initializr.generator.spring.code.MainApplicationTypeCustomizer;
 import io.spring.initializr.generator.spring.code.ServletInitializerCustomizer;
 import io.spring.initializr.generator.spring.code.TestApplicationTypeCustomizer;
+import io.spring.initializr.generator.spring.code.custom.RedisCustomizer;
 import io.spring.initializr.generator.spring.code.custom.SwaggerCustomizer;
 
 /**
@@ -233,4 +233,109 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 		}
 	}
 
+	@Configuration
+	@ConditionalOnRequestedDependency("redis-id")
+	static class RedisConfiguration{
+		
+		@Bean
+		RedisCustomizer<JavaTypeDeclaration> jedisConnectionFactoryCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("jedisConnectionFactory")
+						.modifiers(Modifier.PROTECTED)
+						.returning("org.springframework.data.redis.connection.jedis.JedisConnectionFactory")
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("org.springframework.context.annotation.Bean"));
+				configure.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				typeDeclaration.addMethodDeclaration(configure);
+				typeDeclaration.annotate(Annotation.name("org.springframework.context.annotation.Configuration"));
+				addField(typeDeclaration,"REDIS_HOSTNAME","java.lang.String");
+				addField(typeDeclaration,"REDIS_PASSWORD","java.lang.String");
+				addField(typeDeclaration,"REDIS_PORT","java.lang.Integer");
+				addField(typeDeclaration,"expirationTimeout","java.lang.Integer");
+			};
+		}
+		
+		private void addField(JavaTypeDeclaration typeDeclaration,String fieldName, String returnType) {
+			typeDeclaration.addFieldDeclaration(
+					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PRIVATE).returning(returnType));
+		}
+		
+		@Bean
+		RedisCustomizer<JavaTypeDeclaration> redisTemplateCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("redisTemplate")
+						.modifiers(Modifier.PUBLIC)
+						.returning("org.springframework.data.redis.core.RedisTemplate")
+						.parameters(new Parameter("org.springframework.data.redis.connection.jedis.JedisConnectionFactory",
+								"jedisConnectionFactory"))
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("org.springframework.context.annotation.Bean"));
+				configure.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				typeDeclaration.addMethodDeclaration(configure);
+			};
+		}
+		
+		@Bean
+		RedisCustomizer<JavaTypeDeclaration> redisCacheManagerCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("redisCacheManager")
+						.modifiers(Modifier.PUBLIC)
+						.returning("org.springframework.data.redis.cache.RedisCacheManager")
+						.parameters(new Parameter("org.springframework.data.redis.connection.jedis.JedisConnectionFactory",
+								"jedisConnectionFactory"))
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("org.springframework.context.annotation.Bean"));
+				configure.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				typeDeclaration.addMethodDeclaration(configure);
+			};
+		}
+		
+		@Bean
+		RedisCustomizer<JavaTypeDeclaration> errorHandlerCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				JavaMethodDeclaration configure = JavaMethodDeclaration.method("errorHandler")
+						.modifiers(Modifier.PUBLIC)
+						.returning("org.springframework.cache.interceptor.CacheErrorHandler")
+						.body(new JavaHardCodeExpression());
+				configure.annotate(Annotation.name("java.lang.Override"));
+				configure.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				typeDeclaration.addMethodDeclaration(configure);
+			};
+		}
+		
+		@Bean
+		 RedisCustomizer<JavaTypeDeclaration> loadimports() {
+			return (t) ->{
+				Set<String> imports = new HashSet<>();
+				imports.add("java.time.Duration");
+				imports.add("org.slf4j.Logger");
+				imports.add("org.slf4j.LoggerFactory");
+				imports.add("org.springframework.beans.factory.annotation.Autowired");
+				imports.add("org.springframework.beans.factory.annotation.Value");
+				imports.add("org.springframework.cache.Cache");
+				imports.add("org.springframework.cache.annotation.CachingConfigurer");
+				imports.add("org.springframework.cache.annotation.CachingConfigurerSupport");
+				imports.add("org.springframework.cache.interceptor.CacheErrorHandler");
+				imports.add("org.springframework.context.annotation.Bean");
+				imports.add("org.springframework.context.annotation.Configuration");
+				imports.add("org.springframework.data.redis.cache.RedisCacheConfiguration");
+				imports.add("org.springframework.data.redis.cache.RedisCacheManager");
+				imports.add("org.springframework.data.redis.connection.RedisStandaloneConfiguration");
+				imports.add("org.springframework.data.redis.connection.jedis.JedisClientConfiguration");
+				imports.add("org.springframework.data.redis.connection.jedis.JedisConnectionFactory");
+				imports.add("org.springframework.data.redis.core.RedisTemplate");
+				imports.add("org.springframework.data.redis.serializer.GenericToStringSerializer");
+				t.setImports(imports);
+			};
+		}
+	}
+	
 }

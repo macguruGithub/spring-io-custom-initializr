@@ -5,8 +5,7 @@ import java.util.Map;
 
 public class JavaHardCodeExpression extends JavaStatement {
 	
-	
-	
+		
 	static class SwaggerData{
 		public static Map<String,String> data;
 		
@@ -33,6 +32,32 @@ public class JavaHardCodeExpression extends JavaStatement {
 					"		registry.addResourceHandler(SWAGGER_UI).addResourceLocations(RESOURCE_LOCATION);\r\n" + 
 					"		registry.addResourceHandler(WEB_JARS).addResourceLocations(WEB_JARS_LOCATION)\r\n" + 
 					"	");
+		}
+	}
+	
+	static class RedisData{
+		public static Map<String,String> data;
+		
+		static {
+			data = new HashMap<>();
+			
+			data.put("jedisConnectionFactory", "RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration(REDIS_HOSTNAME, REDIS_PORT);\r\n" + 
+					"				configuration.setPassword(REDIS_PASSWORD);\r\n" +
+					"				JedisClientConfiguration jedisClientConfiguration = JedisClientConfiguration.builder().usePooling().build();\r\n" + 
+					"				JedisConnectionFactory factory = new JedisConnectionFactory(configuration, jedisClientConfiguration);\r\n" + 
+					"				factory.afterPropertiesSet();\r\n" + 
+					"		return factory");
+			data.put("redisTemplate", "final RedisTemplate<String, Object> template = new RedisTemplate<String, Object>();\r\n" + 
+					"		template.setConnectionFactory(jedisConnectionFactory);\r\n" +
+					"		template.setValueSerializer(new GenericToStringSerializer<Object>(Object.class));\r\n" + 
+					"		return template");
+			data.put("redisCacheManager", "RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()\r\n" + 
+					"		.disableCachingNullValues()\r\n" +
+					"		.entryTtl(Duration.ofSeconds(expirationTimeout));\r\n" +
+					"		redisCacheConfiguration.usePrefix();\r\n" +
+					"		return RedisCacheManager.RedisCacheManagerBuilder.fromConnectionFactory(jedisConnectionFactory)\r\n" + 
+					"		.cacheDefaults(redisCacheConfiguration).build()");
+			data.put("errorHandler", "return new RedisCacheErrorHandler()");
 		}
 	}
 

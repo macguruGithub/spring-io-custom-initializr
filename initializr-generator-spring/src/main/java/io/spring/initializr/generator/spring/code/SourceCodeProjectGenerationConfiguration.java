@@ -16,6 +16,10 @@
 
 package io.spring.initializr.generator.spring.code;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.spring.initializr.generator.condition.ConditionalOnPackaging;
 import io.spring.initializr.generator.condition.ConditionalOnPlatformVersion;
 import io.spring.initializr.generator.condition.ConditionalOnRequestedDependency;
@@ -24,12 +28,10 @@ import io.spring.initializr.generator.language.TypeDeclaration;
 import io.spring.initializr.generator.packaging.war.WarPackaging;
 import io.spring.initializr.generator.project.ProjectDescription;
 import io.spring.initializr.generator.project.ProjectGenerationConfiguration;
+import io.spring.initializr.generator.spring.code.custom.RedisContributor;
+import io.spring.initializr.generator.spring.code.custom.RedisCustomizer;
 import io.spring.initializr.generator.spring.code.custom.SwaggerContributor;
 import io.spring.initializr.generator.spring.code.custom.SwaggerCustomizer;
-
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * Project generation configuration for projects written in any language.
@@ -113,5 +115,25 @@ public class SourceCodeProjectGenerationConfiguration {
 
 
 	}
+	
+	@Configuration
+	@ConditionalOnRequestedDependency("redis-id")
+	static class RedisConfiguration {
+
+		private final ProjectDescription description;
+
+		RedisConfiguration(ProjectDescription description) {
+			this.description = description;
+		}
+
+		@Bean
+		RedisContributor redisContributor(
+				ObjectProvider<RedisCustomizer<?>> redisCustomizers) {
+			return new RedisContributor(this.description.getPackageName(),
+					"org.springframework.cache.annotation.CachingConfigurer", "org.springframework.cache.annotation.CachingConfigurerSupport", redisCustomizers);
+		}
+
+
+	}	
 
 }

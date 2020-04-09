@@ -235,6 +235,9 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 		if("swagger".equalsIgnoreCase(method.getFeatureName())) {
 			writer.print(JavaHardCodeExpression.SwaggerData.data.get(method.getName()));
 		}
+		if("redis".equalsIgnoreCase(method.getFeatureName())) {
+			writer.print(JavaHardCodeExpression.RedisData.data.get(method.getName()));
+		}
 	}
 
 	private void writeModifiers(IndentingWriter writer, Map<Predicate<Integer>, String> availableModifiers,
