@@ -28,6 +28,14 @@ import io.spring.initializr.generator.language.TypeDeclaration;
 import io.spring.initializr.generator.packaging.war.WarPackaging;
 import io.spring.initializr.generator.project.ProjectDescription;
 import io.spring.initializr.generator.project.ProjectGenerationConfiguration;
+import io.spring.initializr.generator.spring.code.custom.ApiErrorContributor;
+import io.spring.initializr.generator.spring.code.custom.ApiErrorCustomizer;
+import io.spring.initializr.generator.spring.code.custom.ApplicationExceptionContributor;
+import io.spring.initializr.generator.spring.code.custom.ApplicationExceptionCustomizer;
+import io.spring.initializr.generator.spring.code.custom.BaseExceptionContributor;
+import io.spring.initializr.generator.spring.code.custom.BaseExceptionCustomizer;
+import io.spring.initializr.generator.spring.code.custom.BusinessExceptionContributor;
+import io.spring.initializr.generator.spring.code.custom.BusinessExceptionCustomizer;
 import io.spring.initializr.generator.spring.code.custom.ExceptionConstantsContributor;
 import io.spring.initializr.generator.spring.code.custom.ExceptionConstantsCustomizer;
 import io.spring.initializr.generator.spring.code.custom.GlobalExceptionHandlerContributor;
@@ -142,11 +150,11 @@ public class SourceCodeProjectGenerationConfiguration {
 	
 	@Configuration
 	@ConditionalOnRequestedDependency("exception-id")
-	static class MessageSourceUtilConfiguration {
+	static class ExceptionConfiguration {
 
 		private final ProjectDescription description;
 
-		MessageSourceUtilConfiguration(ProjectDescription description) {
+		ExceptionConfiguration(ProjectDescription description) {
 			this.description = description;
 		}
 
@@ -157,36 +165,14 @@ public class SourceCodeProjectGenerationConfiguration {
 					"org.springframework.context.MessageSourceAware", messageSourceUtilCustomizers);
 		}
 
-	}
-	
-	@Configuration
-	@ConditionalOnRequestedDependency("exception-id")
-	static class ExceptionConstantsConfiguration {
-
-		private final ProjectDescription description;
-
-		ExceptionConstantsConfiguration(ProjectDescription description) {
-			this.description = description;
-		}
-
+		// ExceptionConstants
 		@Bean
 		ExceptionConstantsContributor exceptionConstantsContributor(
 				ObjectProvider<ExceptionConstantsCustomizer<?>> exceptionConstantsCustomizers) {
 			return new ExceptionConstantsContributor(this.description.getPackageName(), exceptionConstantsCustomizers);
 		}
-
-	}
-	
-	@Configuration
-	@ConditionalOnRequestedDependency("exception-id")
-	static class GlobalExceptionHandlerConfiguration {
-
-		private final ProjectDescription description;
-
-		GlobalExceptionHandlerConfiguration(ProjectDescription description) {
-			this.description = description;
-		}
-
+		
+		// GlobalExceptionHandler
 		@Bean
 		GlobalExceptionHandlerContributor globalExceptionHandlerContributor(
 				ObjectProvider<GlobalExceptionHandlerCustomizer<?>> globalExceptionHandlerCustomizers) {
@@ -194,6 +180,37 @@ public class SourceCodeProjectGenerationConfiguration {
 					"org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler", globalExceptionHandlerCustomizers);
 		}
 
+		// ApiError
+		@Bean
+		ApiErrorContributor apiErrorContributor(
+				ObjectProvider<ApiErrorCustomizer<?>> apiErrorCustomizers) {
+			return new ApiErrorContributor(this.description.getPackageName(), apiErrorCustomizers);
+		}
+		
+		// BaseException
+		@Bean
+		BaseExceptionContributor baseExceptionContributor(
+				ObjectProvider<BaseExceptionCustomizer<?>> baseExceptionCustomizers) {
+			return new BaseExceptionContributor(this.description.getPackageName(),
+					"java.lang.RuntimeException", baseExceptionCustomizers);
+		}
+		
+		// BusinessException
+		@Bean
+		BusinessExceptionContributor businessExceptionContributor(
+				ObjectProvider<BusinessExceptionCustomizer<?>> businessExceptionCustomizers) {
+			return new BusinessExceptionContributor(this.description.getPackageName(),
+					"BaseException", businessExceptionCustomizers);
+		}
+		
+		// ApplicationException
+		@Bean
+		ApplicationExceptionContributor applicationExceptionContributor(
+				ObjectProvider<ApplicationExceptionCustomizer<?>> applicationExceptionCustomizers) {
+			return new ApplicationExceptionContributor(this.description.getPackageName(),
+					"BaseException", applicationExceptionCustomizers);
+		}
+		
 	}
 
 }

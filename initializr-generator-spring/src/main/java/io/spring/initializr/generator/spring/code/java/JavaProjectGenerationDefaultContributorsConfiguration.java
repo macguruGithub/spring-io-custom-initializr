@@ -30,11 +30,13 @@ import io.spring.initializr.generator.language.Annotation;
 import io.spring.initializr.generator.language.Parameter;
 import io.spring.initializr.generator.language.java.JavaExpressionStatement;
 import io.spring.initializr.generator.language.java.JavaFieldDeclaration;
+import io.spring.initializr.generator.language.java.JavaGetterCustomizer;
 import io.spring.initializr.generator.language.java.JavaHardCodeExpression;
 import io.spring.initializr.generator.language.java.JavaMethodDeclaration;
 import io.spring.initializr.generator.language.java.JavaMethodInvocation;
 import io.spring.initializr.generator.language.java.JavaObjectCreation;
 import io.spring.initializr.generator.language.java.JavaReturnStatement;
+import io.spring.initializr.generator.language.java.JavaSetterCustomizer;
 import io.spring.initializr.generator.language.java.JavaTypeDeclaration;
 import io.spring.initializr.generator.packaging.war.WarPackaging;
 import io.spring.initializr.generator.project.ProjectDescription;
@@ -42,6 +44,10 @@ import io.spring.initializr.generator.spring.code.CustomApplicationTypeCustomize
 import io.spring.initializr.generator.spring.code.MainApplicationTypeCustomizer;
 import io.spring.initializr.generator.spring.code.ServletInitializerCustomizer;
 import io.spring.initializr.generator.spring.code.TestApplicationTypeCustomizer;
+import io.spring.initializr.generator.spring.code.custom.ApiErrorCustomizer;
+import io.spring.initializr.generator.spring.code.custom.ApplicationExceptionCustomizer;
+import io.spring.initializr.generator.spring.code.custom.BaseExceptionCustomizer;
+import io.spring.initializr.generator.spring.code.custom.BusinessExceptionCustomizer;
 import io.spring.initializr.generator.spring.code.custom.ExceptionConstantsCustomizer;
 import io.spring.initializr.generator.spring.code.custom.GlobalExceptionHandlerCustomizer;
 import io.spring.initializr.generator.spring.code.custom.MessageSourceUtilCustomizer;
@@ -255,7 +261,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				typeDeclaration.annotate(Annotation.name("org.springframework.context.annotation.Configuration"));
 				addField(typeDeclaration,"REDIS_HOSTNAME","java.lang.String");
 				addField(typeDeclaration,"REDIS_PASSWORD","java.lang.String");
-				addField(typeDeclaration,"REDIS_PORT","java.lang.Integer");
+				addField(typeDeclaration,"REDIS_PORT","java.lang.int");
 				addField(typeDeclaration,"expirationTimeout","java.lang.Integer");
 			};
 		}
@@ -343,8 +349,9 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 	
 	@Configuration
 	@ConditionalOnRequestedDependency("exception-id")
-	static class MessageSourceUtilConfiguration{
+	static class ExceptionConfiguration{
 		
+		// MessageSourceUtil
 		@Bean
 		MessageSourceUtilCustomizer<JavaTypeDeclaration> setMessageSourceCustomizer(
 				ProjectDescription description) {
@@ -382,6 +389,24 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 		private void addPublicField(JavaTypeDeclaration typeDeclaration,String fieldName, String value, String returnType) {
 			typeDeclaration.addFieldDeclaration(
 					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PUBLIC).value(value).returning(returnType));
+		}
+		
+		public void customizeGettersAndSetters(JavaTypeDeclaration typeDeclaration, String type, String name) {
+			String caseChange = name.substring(0, 1).toUpperCase() + name.substring(1);
+			String getterName = "get" + caseChange;
+			JavaMethodDeclaration getter = JavaMethodDeclaration.method(getterName)
+					.modifiers(Modifier.PUBLIC)
+					.returning(type)
+					.body(new JavaGetterCustomizer(name));
+			typeDeclaration.addMethodDeclaration(getter);
+			
+			String setterName = "set" + caseChange;
+			JavaMethodDeclaration setter = JavaMethodDeclaration.method(setterName)
+					.modifiers(Modifier.PUBLIC)
+					.returning("void")
+					.parameters(new Parameter(type, name))
+					.body(new JavaSetterCustomizer(name));
+			typeDeclaration.addMethodDeclaration(setter);
 		}
 		
 		@Bean
@@ -439,7 +464,8 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
 								"request"), new Parameter("java.lang.Exception", "ex"))
 						.body(new JavaHardCodeExpression());
-				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler"));
+				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler", (annotation) -> annotation
+						.attribute("value",Exception.class,"ApplicationException.class")));
 				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
 				typeDeclaration.addMethodDeclaration(configure);
 				typeDeclaration.annotate(Annotation.name("org.springframework.web.bind.annotation.RestControllerAdvice"));
@@ -462,7 +488,8 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
 								"request"), new Parameter("java.lang.Exception", "ex"))
 						.body(new JavaHardCodeExpression());
-				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler"));
+				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler", (annotation) -> annotation
+						.attribute("value",Exception.class,"BusinessException.class")));
 				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
 				typeDeclaration.addMethodDeclaration(configure);
 			};
@@ -479,7 +506,8 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
 								"request"), new Parameter("java.lang.Exception", "ex"))
 						.body(new JavaHardCodeExpression());
-				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler"));
+				configure.annotate(Annotation.name("org.springframework.web.bind.annotation.ExceptionHandler", (annotation) -> annotation
+						.attribute("value",Exception.class,"RuntimeException.class")));
 				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
 				typeDeclaration.addMethodDeclaration(configure);
 			};
@@ -494,7 +522,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 						.modifiers(Modifier.PRIVATE)
 						.returning("org.springframework.http.ResponseEntity<Object>")
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
-								"request"), new Parameter("java.lang.Exception", "ex"))
+								"request"), new Parameter("BaseException", "ex"))
 						.body(new JavaHardCodeExpression());
 				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
 				typeDeclaration.addMethodDeclaration(configure);
@@ -518,6 +546,171 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				t.setImports(imports);
 			};
 		}
+		
+		// ApiError
+		@Bean
+		ApiErrorCustomizer<JavaTypeDeclaration> apiErrorCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				addFieldWithoutValue(typeDeclaration,"id", "java.lang.int");
+				addFieldWithoutValue(typeDeclaration,"errorMessage", "java.lang.String");
+				addFieldWithoutValue(typeDeclaration,"errorCode", "java.lang.String");
+				addFieldWithoutValue(typeDeclaration,"errors", "java.util.List<String>");
+				addFieldWithoutValue(typeDeclaration,"timeStamp", "java.lang.String");
+				addFieldWithoutValue(typeDeclaration,"exceptionMessage", "java.lang.String");
+				
+			};
+		}
+		
+		@Bean
+		ApiErrorCustomizer<JavaTypeDeclaration> gettersAndSettersForApiError(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				customizeGettersAndSetters(typeDeclaration, "java.lang.int", "id");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorMessage");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorCode");
+				customizeGettersAndSetters(typeDeclaration, "java.util.List<String>", "errors");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "timeStamp");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "exceptionMessage");
+
+			};
+		}	
+		
+
+		@Bean
+		ApiErrorCustomizer<JavaTypeDeclaration> loadimportsforApiError() {
+			return (t) ->{
+				Set<String> imports = new HashSet<>();
+				imports.add("java.util.List");
+				imports.add("com.fasterxml.jackson.annotation.JsonInclude");
+				imports.add("com.fasterxml.jackson.annotation.JsonInclude.Include");
+				imports.remove("java.util.List<String>");
+				t.setImports(imports);
+			};
+		}
+		
+		// BaseException
+		@Bean
+		BaseExceptionCustomizer<JavaTypeDeclaration> baseExceptionCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				addPrivateField(typeDeclaration,"id", "RandomUtils.nextInt(5000, 10000)", "java.lang.int");
+				addFieldWithoutValue(typeDeclaration,"httpStatus", "org.springframework.http.HttpStatus");
+				addFieldWithoutValue(typeDeclaration,"errorCode", "java.lang.String");
+				addPrivateField(typeDeclaration,"errorModule","ExceptionConstants.GENERAL_MODULE", "java.lang.String");
+				addFieldWithoutValue(typeDeclaration,"exceptionMessage", "java.lang.String");
+				addPrivateField(typeDeclaration,"timeStamp", "new SimpleDateFormat(\"yyyy.MM.dd.HH.mm.ss\").format(new Timestamp(System.currentTimeMillis()))", "java.lang.String");
+				
+			};
+		}
+		
+		@Bean
+		BaseExceptionCustomizer<JavaTypeDeclaration> gettersAndSettersForBaseException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				customizeGettersAndSetters(typeDeclaration, "java.lang.int", "id");
+				customizeGettersAndSetters(typeDeclaration, "org.springframework.http.HttpStatus", "httpStatus");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorCode");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorModule");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "timeStamp");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "exceptionMessage");
+
+			};
+		}	
+		
+		@Bean
+		BaseExceptionCustomizer<JavaTypeDeclaration> loadimportsforBaseException() {
+			return (t) ->{
+				Set<String> imports = new HashSet<>();
+				imports.add("java.sql.Timestamp");
+				imports.add("java.text.SimpleDateFormat");
+				imports.add("org.apache.commons.lang3.RandomUtils");
+				t.setImports(imports);
+			};
+		}
+		
+		// BusinessException
+		@Bean
+		BusinessExceptionCustomizer<JavaTypeDeclaration> businessExceptionCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				addFieldWithoutValue(typeDeclaration,"id", "java.lang.int");
+				addPrivateField(typeDeclaration,"httpStatus", "HttpStatus.UNPROCESSABLE_ENTITY", "org.springframework.http.HttpStatus");
+				addFieldWithoutValue(typeDeclaration,"errorCode", "java.lang.String");
+				addFieldWithoutValue(typeDeclaration,"errorModule", "java.lang.String");
+				addFieldWithoutValue(typeDeclaration,"exceptionMessage", "java.lang.String");
+				addPrivateField(typeDeclaration,"timeStamp", "new SimpleDateFormat(\"yyyy.MM.dd.HH.mm.ss\").format(new Timestamp(System.currentTimeMillis()))", "java.lang.String");
+				
+			};
+		}
+		
+		@Bean
+		BusinessExceptionCustomizer<JavaTypeDeclaration> gettersAndSettersForBusinessException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				customizeGettersAndSetters(typeDeclaration, "java.lang.int", "id");
+				customizeGettersAndSetters(typeDeclaration, "org.springframework.http.HttpStatus", "httpStatus");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorCode");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorModule");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "timeStamp");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "exceptionMessage");
+
+			};
+		}	
+		
+		@Bean
+		BusinessExceptionCustomizer<JavaTypeDeclaration> loadimportsforBusinessException() {
+			return (t) ->{
+				Set<String> imports = new HashSet<>();
+				imports.add("java.sql.Timestamp");
+				imports.add("java.text.SimpleDateFormat");
+				t.setImports(imports);
+			};
+		}
+		
+		// ApplicationException
+		@Bean
+		ApplicationExceptionCustomizer<JavaTypeDeclaration> applicationExceptionCustomizer(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				typeDeclaration.modifiers(Modifier.PUBLIC);
+				addFieldWithoutValue(typeDeclaration,"id", "java.lang.int");
+				addPrivateField(typeDeclaration,"httpStatus", "HttpStatus.INTERNAL_SERVER_ERROR", "org.springframework.http.HttpStatus");
+				addFieldWithoutValue(typeDeclaration,"errorCode", "java.lang.String");
+				addPrivateField(typeDeclaration,"errorModule","ExceptionConstants.GENERAL_MODULE", "java.lang.String");
+				addFieldWithoutValue(typeDeclaration,"exceptionMessage", "java.lang.String");
+				addPrivateField(typeDeclaration,"timeStamp", "new SimpleDateFormat(\"yyyy.MM.dd.HH.mm.ss\").format(new Timestamp(System.currentTimeMillis()))", "java.lang.String");
+				
+			};
+		}
+		
+		@Bean
+		ApplicationExceptionCustomizer<JavaTypeDeclaration> gettersAndSettersForApplicationException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				customizeGettersAndSetters(typeDeclaration, "java.lang.int", "id");
+				customizeGettersAndSetters(typeDeclaration, "org.springframework.http.HttpStatus", "httpStatus");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorCode");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorModule");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "timeStamp");
+				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "exceptionMessage");
+
+			};
+		}	
+		
+		@Bean
+		ApplicationExceptionCustomizer<JavaTypeDeclaration> loadimportsforApplicationException() {
+			return (t) ->{
+				Set<String> imports = new HashSet<>();
+				imports.add("java.sql.Timestamp");
+				imports.add("java.text.SimpleDateFormat");
+				t.setImports(imports);
+			};
+		}
+		
 	}
 	
 }

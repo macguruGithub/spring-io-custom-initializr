@@ -221,6 +221,16 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 				else if (statement instanceof JavaReturnStatement) {
 					writer.print("return ");
 					writeExpression(writer, ((JavaReturnStatement) statement).getExpression());
+				}
+				else if (statement instanceof JavaGetterCustomizer) {
+					writer.print("return ");
+					writer.print(((JavaGetterCustomizer) statement).getString());
+				}
+				else if (statement instanceof JavaSetterCustomizer) {
+					writer.print("this.");
+					writer.print(((JavaSetterCustomizer) statement).getString());
+					writer.print(" = ");
+					writer.print(((JavaSetterCustomizer) statement).getString());
 				}else if(statement instanceof JavaHardCodeExpression) {
 					writeHardcodeExpression(writer,methodDeclaration);
 				}
