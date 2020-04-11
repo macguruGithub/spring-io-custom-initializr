@@ -266,9 +266,11 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 			};
 		}
 		
-		private void addField(JavaTypeDeclaration typeDeclaration,String fieldName, String returnType) {
-			typeDeclaration.addFieldDeclaration(
-					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PRIVATE).returning(returnType));
+		private void addField(JavaTypeDeclaration typeDeclaration, String fieldName, String returnType) {
+			JavaFieldDeclaration javaFieldDeclaration = JavaFieldDeclaration.field(fieldName)
+					.modifiers(Modifier.PRIVATE).returning(returnType);
+			javaFieldDeclaration.annotate(Annotation.name("org.springframework.beans.factory.annotation.Value"));
+			typeDeclaration.addFieldDeclaration(javaFieldDeclaration);
 		}
 		
 		@Bean
