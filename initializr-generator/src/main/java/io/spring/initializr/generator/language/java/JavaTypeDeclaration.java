@@ -34,6 +34,8 @@ public class JavaTypeDeclaration extends TypeDeclaration {
 	private final List<JavaFieldDeclaration> fieldDeclarations = new ArrayList<>();
 
 	private final List<JavaMethodDeclaration> methodDeclarations = new ArrayList<>();
+	
+	private List<JavaStaticClassDeclaration> staticClassDeclaration;
 
 	JavaTypeDeclaration(String name) {
 		super(name);
@@ -61,6 +63,14 @@ public class JavaTypeDeclaration extends TypeDeclaration {
 
 	public List<JavaMethodDeclaration> getMethodDeclarations() {
 		return this.methodDeclarations;
+	}
+
+	public List<JavaStaticClassDeclaration> getStaticClassDeclaration() {
+		return staticClassDeclaration;
+	}
+
+	public void setStaticClassDeclaration(List<JavaStaticClassDeclaration> staticClassDeclaration) {
+		this.staticClassDeclaration = staticClassDeclaration;
 	}
 
 }

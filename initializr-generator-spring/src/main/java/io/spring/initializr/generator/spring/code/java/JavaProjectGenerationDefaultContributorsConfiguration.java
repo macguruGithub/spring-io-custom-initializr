@@ -17,8 +17,11 @@
 package io.spring.initializr.generator.spring.code.java;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +40,7 @@ import io.spring.initializr.generator.language.java.JavaMethodInvocation;
 import io.spring.initializr.generator.language.java.JavaObjectCreation;
 import io.spring.initializr.generator.language.java.JavaReturnStatement;
 import io.spring.initializr.generator.language.java.JavaSetterCustomizer;
+import io.spring.initializr.generator.language.java.JavaStaticClassDeclaration;
 import io.spring.initializr.generator.language.java.JavaTypeDeclaration;
 import io.spring.initializr.generator.packaging.war.WarPackaging;
 import io.spring.initializr.generator.project.ProjectDescription;
@@ -259,17 +263,64 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				configure.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
 				typeDeclaration.addMethodDeclaration(configure);
 				typeDeclaration.annotate(Annotation.name("org.springframework.context.annotation.Configuration"));
-				addField(typeDeclaration,"REDIS_HOSTNAME","java.lang.String");
-				addField(typeDeclaration,"REDIS_PASSWORD","java.lang.String");
-				addField(typeDeclaration,"REDIS_PORT","java.lang.int");
-				addField(typeDeclaration,"expirationTimeout","java.lang.Integer");
+				addField(typeDeclaration,"REDIS_HOSTNAME","java.lang.String","${spring.redis.host}");
+				addField(typeDeclaration,"REDIS_PASSWORD","java.lang.String","${spring.redis.password}");
+				addField(typeDeclaration,"REDIS_PORT","java.lang.int","{spring.redis.port}");
+				addField(typeDeclaration,"expirationTimeout","java.lang.Integer","{spring.cache.redis.time-to-live}");
+				
+				JavaStaticClassDeclaration staticRedisCacheErrorHandlerClassDeclaration = new JavaStaticClassDeclaration("RedisCacheErrorHandler");
+				staticRedisCacheErrorHandlerClassDeclaration.implement("org.springframework.cache.interceptor.CacheErrorHandler");
+				JavaMethodDeclaration handleCacheGetErrorConfig = JavaMethodDeclaration.method("handleCacheGetError")
+				.modifiers(Modifier.PUBLIC)
+				.returning("void")
+				.parameters(new Parameter("java.lang.RuntimeException",
+						"exception"),new Parameter(" org.springframework.cache.Cache",
+								"cache"),new Parameter("java.lang.Object",
+										"key"))
+				.body(new JavaHardCodeExpression());
+				handleCacheGetErrorConfig.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				staticRedisCacheErrorHandlerClassDeclaration.addMethodDeclaration(handleCacheGetErrorConfig);
+				JavaMethodDeclaration handleCachePutErrorConfig = JavaMethodDeclaration.method("handleCachePutError")
+						.modifiers(Modifier.PUBLIC)
+						.returning("void")
+						.parameters(new Parameter("java.lang.RuntimeException",
+								"exception"),new Parameter(" org.springframework.cache.Cache",
+										"cache"),new Parameter("java.lang.Object",
+												"key"),new Parameter("java.lang.Object",
+														"value"))
+						.body(new JavaHardCodeExpression());
+				handleCachePutErrorConfig.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				staticRedisCacheErrorHandlerClassDeclaration.addMethodDeclaration(handleCachePutErrorConfig);
+				JavaMethodDeclaration handleCacheEvictErrorConfig = JavaMethodDeclaration.method("handleCacheEvictError")
+						.modifiers(Modifier.PUBLIC)
+						.returning("void")
+						.parameters(new Parameter("java.lang.RuntimeException",
+								"exception"),new Parameter(" org.springframework.cache.Cache",
+										"cache"),new Parameter("java.lang.Object",
+												"key"))
+						.body(new JavaHardCodeExpression());
+				handleCacheEvictErrorConfig.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				staticRedisCacheErrorHandlerClassDeclaration.addMethodDeclaration(handleCacheEvictErrorConfig);
+				JavaMethodDeclaration handleCacheClearErrorConfig = JavaMethodDeclaration.method("handleCacheClearError")
+						.modifiers(Modifier.PUBLIC)
+						.returning("void")
+						.parameters(new Parameter("java.lang.RuntimeException",
+								"exception"))
+						.body(new JavaHardCodeExpression());
+				handleCacheClearErrorConfig.setFeatureName(JavaProjectConstants.REDIS_FEATURE);
+				staticRedisCacheErrorHandlerClassDeclaration.addMethodDeclaration(handleCacheClearErrorConfig);
+				List<JavaStaticClassDeclaration> staticClassList = new ArrayList<JavaStaticClassDeclaration>();
+				staticClassList.add(staticRedisCacheErrorHandlerClassDeclaration);
+				typeDeclaration.setStaticClassDeclaration(staticClassList);
 			};
 		}
 		
-		private void addField(JavaTypeDeclaration typeDeclaration, String fieldName, String returnType) {
+		private void addField(JavaTypeDeclaration typeDeclaration, String fieldName, String returnType, String annotationValue) {
 			JavaFieldDeclaration javaFieldDeclaration = JavaFieldDeclaration.field(fieldName)
 					.modifiers(Modifier.PRIVATE).returning(returnType);
-			javaFieldDeclaration.annotate(Annotation.name("org.springframework.beans.factory.annotation.Value"));
+			javaFieldDeclaration.annotate(Annotation.name("org.springframework.beans.factory.annotation.Value",annotation -> {
+				annotation.attribute("value", String.class, annotationValue);
+			}));
 			typeDeclaration.addFieldDeclaration(javaFieldDeclaration);
 		}
 		

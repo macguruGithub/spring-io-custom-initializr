@@ -137,6 +137,15 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 						}
 					});
 				}
+				
+				List<JavaStaticClassDeclaration> classDeclarationsList = type.getStaticClassDeclaration();
+				if(classDeclarationsList != null && !classDeclarationsList.isEmpty()) {
+					writer.indented(() ->{
+						for(JavaStaticClassDeclaration classDeclaration : classDeclarationsList) {
+							writeStaticInnerClassDeclaration(writer,classDeclaration);
+						}
+					});
+				}
 				writer.println("}");
 			}
 		}
@@ -212,31 +221,63 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 					.collect(Collectors.joining(", ")));
 		}
 		writer.println(") {");
-		writer.indented(() -> {
-			List<JavaStatement> statements = methodDeclaration.getStatements();
-			for (JavaStatement statement : statements) {
-				if (statement instanceof JavaExpressionStatement) {
-					writeExpression(writer, ((JavaExpressionStatement) statement).getExpression());
-				}
-				else if (statement instanceof JavaReturnStatement) {
-					writer.print("return ");
-					writeExpression(writer, ((JavaReturnStatement) statement).getExpression());
-				}
-				else if (statement instanceof JavaGetterCustomizer) {
-					writer.print("return ");
-					writer.print(((JavaGetterCustomizer) statement).getString());
-				}
-				else if (statement instanceof JavaSetterCustomizer) {
-					writer.print("this.");
-					writer.print(((JavaSetterCustomizer) statement).getString());
-					writer.print(" = ");
-					writer.print(((JavaSetterCustomizer) statement).getString());
-				}else if(statement instanceof JavaHardCodeExpression) {
-					writeHardcodeExpression(writer,methodDeclaration);
-				}
-				writer.println(";");
+		//writer.indented(() -> {});
+
+		List<JavaStatement> statements = methodDeclaration.getStatements();
+		for (JavaStatement statement : statements) {
+			if (statement instanceof JavaExpressionStatement) {
+				writeExpression(writer, ((JavaExpressionStatement) statement).getExpression());
 			}
-		});
+			else if (statement instanceof JavaReturnStatement) {
+				writer.print("return ");
+				writeExpression(writer, ((JavaReturnStatement) statement).getExpression());
+			}
+			else if (statement instanceof JavaGetterCustomizer) {
+				writer.print("return ");
+				writer.print(((JavaGetterCustomizer) statement).getString());
+			}
+			else if (statement instanceof JavaSetterCustomizer) {
+				writer.print("this.");
+				writer.print(((JavaSetterCustomizer) statement).getString());
+				writer.print(" = ");
+				writer.print(((JavaSetterCustomizer) statement).getString());
+			}else if(statement instanceof JavaHardCodeExpression) {
+				writeHardcodeExpression(writer,methodDeclaration);
+			}
+			writer.println(";");
+		}
+	
+		writer.println("}");
+		writer.println();
+	}
+	
+	private void writeStaticInnerClassDeclaration(IndentingWriter writer, JavaStaticClassDeclaration staticInnerClassDeclaration) {
+		writeModifiers(writer, TYPE_MODIFIERS, staticInnerClassDeclaration.getModifiers());
+		writer.print("static class " + staticInnerClassDeclaration.getName());
+		if (staticInnerClassDeclaration.getExtends() != null) {
+			writer.print(" extends " + getUnqualifiedName(staticInnerClassDeclaration.getExtends()));
+		}
+		if(staticInnerClassDeclaration.getImplement() != null) {
+			writer.print(" implements " + getUnqualifiedName(staticInnerClassDeclaration.getImplement()));
+		}
+		writer.println(" {");
+		writer.println();
+		List<JavaFieldDeclaration> fieldDeclarations = staticInnerClassDeclaration.getFieldDeclarations();
+		if (!fieldDeclarations.isEmpty()) {
+			writer.indented(() -> {
+				for (JavaFieldDeclaration fieldDeclaration : fieldDeclarations) {
+					writeFieldDeclaration(writer, fieldDeclaration);
+				}
+			});
+		}
+		List<JavaMethodDeclaration> methodDeclarations = staticInnerClassDeclaration.getMethodDeclarations();
+		if (!methodDeclarations.isEmpty()) {
+			writer.indented(() -> {
+				for (JavaMethodDeclaration methodDeclaration : methodDeclarations) {
+					writeMethodDeclaration(writer, methodDeclaration);
+				}
+			});
+		}
 		writer.println("}");
 		writer.println();
 	}

@@ -58,6 +58,10 @@ public class JavaHardCodeExpression extends JavaStatement {
 					"		return RedisCacheManager.RedisCacheManagerBuilder.fromConnectionFactory(jedisConnectionFactory)\r\n" + 
 					"		.cacheDefaults(redisCacheConfiguration).build()");
 			data.put("errorHandler", "return new RedisCacheErrorHandler()");
+			data.put("handleCacheGetError", "log.info(\"Unable to get from cache \" + cache.getName() + \" : \" + exception.getMessage())");
+			data.put("handleCachePutError", "log.info(\"Unable to put into cache \" + cache.getName() + \" : \" + exception.getMessage())");
+			data.put("handleCacheEvictError", "log.info(\"Unable to evict from cache \" + cache.getName() + \" : \" + exception.getMessage())");
+			data.put("handleCacheClearError", "log.info(\"Unable to clean cache \" + cache.getName() + \" : \" + exception.getMessage())");
 		}
 	}
 	
