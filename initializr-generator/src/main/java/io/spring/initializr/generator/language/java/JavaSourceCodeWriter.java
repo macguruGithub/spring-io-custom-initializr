@@ -137,6 +137,14 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 						}
 					});
 				}
+				List<JavaConstructorDeclaration> constructorDeclarations = type.getConstructorDeclarations();
+				if (!constructorDeclarations.isEmpty()) {
+					writer.indented(() -> {
+						for (JavaConstructorDeclaration constructorDeclaration : constructorDeclarations) {
+							writeConstructorDeclaration(writer, constructorDeclaration);
+						}
+					});
+				}
 				
 				List<JavaStaticClassDeclaration> classDeclarationsList = type.getStaticClassDeclaration();
 				if(classDeclarationsList != null && !classDeclarationsList.isEmpty()) {
@@ -251,6 +259,56 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 		writer.println();
 	}
 	
+	private void writeConstructorDeclaration(IndentingWriter writer, JavaConstructorDeclaration constructorDeclaration) {
+		writeModifiers(writer, METHOD_MODIFIERS, constructorDeclaration.getModifiers());
+		writer.print(constructorDeclaration.getName() + "(");
+		List<Parameter> parameters = constructorDeclaration.getParameters();
+		if (!parameters.isEmpty()) {
+			writer.print(parameters.stream()
+					.map((parameter) -> getUnqualifiedName(parameter.getType()) + " " + parameter.getName())
+					.collect(Collectors.joining(", ")));
+		}
+		writer.println(") {");
+		writer.print("super (");
+		if("applicationException".equals(constructorDeclaration.getFeatureName()) || "businessException".equals(constructorDeclaration.getFeatureName())) {
+			if (!parameters.isEmpty()) {
+				writer.print(parameters.stream()
+					.map((parameter) -> parameter.getName())
+					.collect(Collectors.joining(", ")));
+			}
+		}
+		writer.println(");");
+		if(constructorDeclaration.getStatements() != null) {
+			List<JavaStatement> statements = constructorDeclaration.getStatements();
+			for (JavaStatement statement : statements) {
+				if(statement instanceof JavaHardCodeExpression) {
+					writeConstructorExpression(writer,constructorDeclaration);
+				}
+			}
+		}
+		List<Parameter> parameterList = constructorDeclaration.getParameters();
+		if (!parameterList.isEmpty()) {
+			writer.indented(() -> {
+				for (Parameter param : parameterList) {
+					writer.print("this.");
+					writer.print(param.getName());
+					writer.print(" = ");
+					writer.print(param.getName());
+					writer.println(";");
+				}
+			});
+		}
+	
+		writer.println("}");
+		writer.println();
+	}
+	
+	private void writeConstructorExpression(IndentingWriter writer, JavaConstructorDeclaration method) {
+		if("baseException".equalsIgnoreCase(method.getFeatureName())) {
+			writer.println(JavaHardCodeExpression.BaseExceptionData.data.get(method.getName()));
+		}
+	}
+	
 	private void writeStaticInnerClassDeclaration(IndentingWriter writer, JavaStaticClassDeclaration staticInnerClassDeclaration) {
 		writeModifiers(writer, TYPE_MODIFIERS, staticInnerClassDeclaration.getModifiers());
 		writer.print("static class " + staticInnerClassDeclaration.getName());
@@ -294,6 +352,9 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 		}
 		if("globalExceptionHandler".equalsIgnoreCase(method.getFeatureName())) {
 			writer.print(JavaHardCodeExpression.GlobalExceptionHandler.data.get(method.getName()));
+		}
+		if("applicationException".equalsIgnoreCase(method.getFeatureName())) {
+			writer.print(JavaHardCodeExpression.ApplicationExceptionData.data.get(method.getName()));
 		}
 	}
 

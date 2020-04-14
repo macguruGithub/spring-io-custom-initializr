@@ -49,7 +49,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -70,6 +70,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public abstract class ProjectGenerationController<R extends ProjectRequest> {
 
+	@Autowired
+	HttpServletResponse resp;
 	private static final Log logger = LogFactory.getLog(ProjectGenerationController.class);
 
 	private final InitializrMetadataProvider metadataProvider;
@@ -131,6 +133,7 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 		ProjectGenerationResult result = this.projectGenerationInvoker.invokeProjectStructureGeneration(request);
 		Path archive = createArchive(result, "zip", ZipArchiveOutputStream::new, ZipArchiveEntry::new,
 				ZipArchiveEntry::setUnixMode);
+		resp.addHeader("Access-Control-Allow-Origin", "*");
 		return upload(archive, result.getRootDirectory(), generateFileName(request, "zip"), "application/zip");
 	}
 

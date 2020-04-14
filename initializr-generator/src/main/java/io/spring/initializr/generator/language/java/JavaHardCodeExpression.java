@@ -117,4 +117,59 @@ public class JavaHardCodeExpression extends JavaStatement {
 			
 		}
 	}
+	
+	static class BaseExceptionData{
+		public static Map<String,String> data;
+		
+		static {
+			data = new HashMap<>();
+			data.put("BaseException", "this.id = RandomUtils.nextInt(1001, 5000);");
+		}
+	}
+	
+	static class ApplicationExceptionData{
+		public static Map<String,String> data;
+		
+		static {
+			data = new HashMap<>();
+			
+			data.put("ApplicationException", "super(errorCode, errorModule, exceptionMessage);\r\n" + 
+					"		this.errorCode = errorCode;\r\n" + 
+					"		this.errorModule = errorModule;\r\n" + 
+					"		this.exceptionMessage = exceptionMessage;\r\n" + 
+					"	}\r\n" + 
+					"	public ApplicationException(HttpStatus httpStatus, String errorCode, String errorModule, String exceptionMessage,\r\n" + 
+					"			String timeStamp) {\r\n" + 
+					"		super(httpStatus, errorCode, errorModule, exceptionMessage,timeStamp);\r\n" + 
+					"		this.httpStatus = httpStatus;\r\n" + 
+					"		this.errorCode = errorCode;\r\n" + 
+					"		this.errorModule = errorModule;\r\n" + 
+					"		this.exceptionMessage = exceptionMessage;\r\n" + 
+					"		this.timeStamp = timeStamp;\r\n" + 
+					"	}\r\n" + 
+					"	public ApplicationException(HttpStatus httpStatus, String errorCode, String exceptionMessage) {\r\n" + 
+					"		super(httpStatus, errorCode, exceptionMessage);\r\n" + 
+					"		this.httpStatus = httpStatus;\r\n" + 
+					"		this.errorCode = errorCode;\r\n" + 
+					"		this.exceptionMessage = exceptionMessage;\r\n" + 
+					"	}\r\n" + 
+					"	public ApplicationException(HttpStatus httpStatus, String errorCode,String errorModule, String exceptionMessage) {\r\n" + 
+					"		super(httpStatus, errorCode, exceptionMessage);\r\n" + 
+					"		this.httpStatus = httpStatus;\r\n" + 
+					"		this.errorCode = errorCode;\r\n" + 
+					"		this.errorModule = errorModule;\r\n" + 
+					"		this.exceptionMessage = exceptionMessage;\r\n" + 
+					"	}\r\n" + 
+					"	public ApplicationException(HttpStatus httpStatus, String errorCode) {\r\n" + 
+					"		super(httpStatus, errorCode);\r\n" + 
+					"		this.httpStatus = httpStatus;\r\n" + 
+					"		this.errorCode = errorCode;\r\n" + 
+					"	}\r\n" + 
+					"	public ApplicationException(String errorCode, String exceptionMessage) {\r\n" + 
+					"		super(errorCode, exceptionMessage);\r\n" + 
+					"		this.errorCode = errorCode;\r\n" + 
+					"		this.exceptionMessage = exceptionMessage");
+			
+		}
+	}
 }

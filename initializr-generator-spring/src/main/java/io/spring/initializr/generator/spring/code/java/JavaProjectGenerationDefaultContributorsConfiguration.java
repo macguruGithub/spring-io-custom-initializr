@@ -21,16 +21,18 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.spring.initializr.generator.condition.ConditionalOnPackaging;
 import io.spring.initializr.generator.condition.ConditionalOnPlatformVersion;
 import io.spring.initializr.generator.condition.ConditionalOnRequestedDependency;
 import io.spring.initializr.generator.language.Annotation;
 import io.spring.initializr.generator.language.Parameter;
+import io.spring.initializr.generator.language.java.JavaConstructorDeclaration;
 import io.spring.initializr.generator.language.java.JavaExpressionStatement;
 import io.spring.initializr.generator.language.java.JavaFieldDeclaration;
 import io.spring.initializr.generator.language.java.JavaGetterCustomizer;
@@ -270,6 +272,10 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				
 				JavaStaticClassDeclaration staticRedisCacheErrorHandlerClassDeclaration = new JavaStaticClassDeclaration("RedisCacheErrorHandler");
 				staticRedisCacheErrorHandlerClassDeclaration.implement("org.springframework.cache.interceptor.CacheErrorHandler");
+				JavaFieldDeclaration staticClassFieldDeclaration = JavaFieldDeclaration.field("log")
+						.value("LoggerFactory.getLogger(this.getClass())").returning("org.slf4j.Logger");
+				staticRedisCacheErrorHandlerClassDeclaration.addFieldDeclaration(staticClassFieldDeclaration);
+				
 				JavaMethodDeclaration handleCacheGetErrorConfig = JavaMethodDeclaration.method("handleCacheGetError")
 				.modifiers(Modifier.PUBLIC)
 				.returning("void")
@@ -331,8 +337,8 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				typeDeclaration.modifiers(Modifier.PUBLIC);
 				JavaMethodDeclaration configure = JavaMethodDeclaration.method("redisTemplate")
 						.modifiers(Modifier.PUBLIC)
-						.returning("org.springframework.data.redis.core.RedisTemplate")
-						.parameters(new Parameter("org.springframework.data.redis.connection.jedis.JedisConnectionFactory",
+						.returning("RedisTemplate<String, Object>")
+						.parameters(new Parameter("@Autowired JedisConnectionFactory",
 								"jedisConnectionFactory"))
 						.body(new JavaHardCodeExpression());
 				configure.annotate(Annotation.name("org.springframework.context.annotation.Bean"));
@@ -349,7 +355,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				JavaMethodDeclaration configure = JavaMethodDeclaration.method("redisCacheManager")
 						.modifiers(Modifier.PUBLIC)
 						.returning("org.springframework.data.redis.cache.RedisCacheManager")
-						.parameters(new Parameter("org.springframework.data.redis.connection.jedis.JedisConnectionFactory",
+						.parameters(new Parameter("@Autowired JedisConnectionFactory",
 								"jedisConnectionFactory"))
 						.body(new JavaHardCodeExpression());
 				configure.annotate(Annotation.name("org.springframework.context.annotation.Bean"));
@@ -420,15 +426,22 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				configure.setFeatureName(JavaProjectConstants.MESSAGE_SOURCE_UTIL);
 				typeDeclaration.addMethodDeclaration(configure);
 				typeDeclaration.annotate(Annotation.name("org.springframework.stereotype.Component"));
-				addFieldWithoutValue(typeDeclaration,"messageSource","org.springframework.context.MessageSource");
-				addPrivateField(typeDeclaration,"errorBaseKey","\"ERROR_CONFIG\"","java.lang.String");
-				addPrivateField(typeDeclaration,"errorSeperator","\".\"","java.lang.String");
-				addPrivateField(typeDeclaration,"errorMessage","\"message\"","java.lang.String");
-				addPrivateField(typeDeclaration,"baseKey","errorBaseKey + errorSeperator","java.lang.String");
+				addFieldAnnotation(typeDeclaration,"messageSource","org.springframework.context.MessageSource", "org.springframework.beans.factory.annotation.Autowired");
+				addPrivateField(typeDeclaration,"errorBaseKey","\"ERROR_CONFIG\"","static final String");
+				addPrivateField(typeDeclaration,"errorSeperator","\".\"","static final String");
+				addPrivateField(typeDeclaration,"errorMessage","\"message\"","static final String");
+				addPrivateField(typeDeclaration,"baseKey","errorBaseKey + errorSeperator","static final String");
 				
 			};
 		}
 	
+		private void addFieldAnnotation(JavaTypeDeclaration typeDeclaration, String fieldName, String returnType,String annotateWith) {
+			JavaFieldDeclaration javaFieldDeclaration = JavaFieldDeclaration.field(fieldName)
+					.modifiers(Modifier.PRIVATE).returning(returnType);
+			javaFieldDeclaration.annotate(Annotation.name(annotateWith));
+			typeDeclaration.addFieldDeclaration(javaFieldDeclaration);
+		}
+		
 		private void addFieldWithoutValue(JavaTypeDeclaration typeDeclaration,String fieldName, String returnType) {
 			typeDeclaration.addFieldDeclaration(
 					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PRIVATE).returning(returnType));
@@ -444,7 +457,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 					JavaFieldDeclaration.field(fieldName).modifiers(Modifier.PUBLIC).value(value).returning(returnType));
 		}
 		
-		public void customizeGettersAndSetters(JavaTypeDeclaration typeDeclaration, String type, String name) {
+		private void customizeGettersAndSetters(JavaTypeDeclaration typeDeclaration, String type, String name) {
 			String caseChange = name.substring(0, 1).toUpperCase() + name.substring(1);
 			String getterName = "get" + caseChange;
 			JavaMethodDeclaration getter = JavaMethodDeclaration.method(getterName)
@@ -460,6 +473,15 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 					.parameters(new Parameter(type, name))
 					.body(new JavaSetterCustomizer(name));
 			typeDeclaration.addMethodDeclaration(setter);
+		}
+		
+		private void constructorDeclarations(JavaTypeDeclaration typeDeclaration, String constuctorName, String featureName, Parameter... parameters) {
+			JavaConstructorDeclaration configure = JavaConstructorDeclaration.constructor(constuctorName)
+					.modifiers(Modifier.PUBLIC)
+					.parameters(parameters)
+					.body();
+			configure.setFeatureName(featureName);
+			typeDeclaration.addConstructorDeclaration(configure);
 		}
 		
 		@Bean
@@ -496,11 +518,11 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				ProjectDescription description) {
 			return (typeDeclaration) -> {
 				typeDeclaration.modifiers(Modifier.PUBLIC);
-				addPublicField(typeDeclaration,"GENERAL_MODULE","\"GENERAL\"","java.lang.String");
-				addPublicField(typeDeclaration,"API_MANAGEMENT","\"API_MANAGEMENT\"","java.lang.String");
-				addPublicField(typeDeclaration,"GENERAL_ERROR_CODE","\"ER_001\"","java.lang.String");
-				addPublicField(typeDeclaration,"INVALID_RESPONSE","\"ER_002\"","java.lang.String");
-				addPublicField(typeDeclaration,"JSESSIONID_NOTFOUND","\"ER_003\"","java.lang.String");
+				addPublicField(typeDeclaration,"GENERAL_MODULE","\"GENERAL\"","static final String");
+				addPublicField(typeDeclaration,"API_MANAGEMENT","\"API_MANAGEMENT\"","static final String");
+				addPublicField(typeDeclaration,"GENERAL_ERROR_CODE","\"ER_001\"","static final String");
+				addPublicField(typeDeclaration,"INVALID_RESPONSE","\"ER_002\"","static final String");
+				addPublicField(typeDeclaration,"JSESSIONID_NOTFOUND","\"ER_003\"","static final String");
 				
 			};
 		}
@@ -513,7 +535,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				typeDeclaration.modifiers(Modifier.PUBLIC);
 				JavaMethodDeclaration configure = JavaMethodDeclaration.method("handleApplicationException")
 						.modifiers(Modifier.PUBLIC)
-						.returning("org.springframework.http.ResponseEntity<Object>")
+						.returning("ResponseEntity<Object>")
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
 								"request"), new Parameter("java.lang.Exception", "ex"))
 						.body(new JavaHardCodeExpression());
@@ -522,7 +544,8 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				configure.setFeatureName(JavaProjectConstants.GLOBAL_EXCEPTION_HANDLER);
 				typeDeclaration.addMethodDeclaration(configure);
 				typeDeclaration.annotate(Annotation.name("org.springframework.web.bind.annotation.RestControllerAdvice"));
-				
+				addFieldAnnotation(typeDeclaration,"messageSourceUtil","MessageSourceUtil", "org.springframework.beans.factory.annotation.Autowired");
+				addPrivateField(typeDeclaration, "logger", "LoggerFactory.getLogger(this.getClass())", "org.slf4j.Logger");
 				//addFieldWithoutValue(typeDeclaration,"messageSourceUtil","org.springframework.context.MessageSource");
 //				addPrivateField(typeDeclaration,"errorBaseKey","\"ERROR_CONFIG\"","java.lang.String");
 				
@@ -537,7 +560,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				typeDeclaration.modifiers(Modifier.PUBLIC);
 				JavaMethodDeclaration configure = JavaMethodDeclaration.method("handleBusinessException")
 						.modifiers(Modifier.PUBLIC)
-						.returning("org.springframework.http.ResponseEntity<Object>")
+						.returning("ResponseEntity<Object>")
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
 								"request"), new Parameter("java.lang.Exception", "ex"))
 						.body(new JavaHardCodeExpression());
@@ -555,7 +578,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				typeDeclaration.modifiers(Modifier.PUBLIC);
 				JavaMethodDeclaration configure = JavaMethodDeclaration.method("handleException")
 						.modifiers(Modifier.PUBLIC)
-						.returning("org.springframework.http.ResponseEntity<Object>")
+						.returning("ResponseEntity<Object>")
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
 								"request"), new Parameter("java.lang.Exception", "ex"))
 						.body(new JavaHardCodeExpression());
@@ -573,7 +596,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				typeDeclaration.modifiers(Modifier.PUBLIC);
 				JavaMethodDeclaration configure = JavaMethodDeclaration.method("getCustomExceptionResponse")
 						.modifiers(Modifier.PRIVATE)
-						.returning("org.springframework.http.ResponseEntity<Object>")
+						.returning("ResponseEntity<Object>")
 						.parameters(new Parameter("org.springframework.web.context.request.WebRequest",
 								"request"), new Parameter("BaseException", "ex"))
 						.body(new JavaHardCodeExpression());
@@ -609,7 +632,14 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				addFieldWithoutValue(typeDeclaration,"id", "java.lang.int");
 				addFieldWithoutValue(typeDeclaration,"errorMessage", "java.lang.String");
 				addFieldWithoutValue(typeDeclaration,"errorCode", "java.lang.String");
-				addFieldWithoutValue(typeDeclaration,"errors", "java.util.List<String>");
+				
+				JavaFieldDeclaration javaFieldDeclaration = JavaFieldDeclaration.field("errors")
+						.modifiers(Modifier.PRIVATE).returning("List<String>");
+					javaFieldDeclaration.annotate(Annotation.name("com.fasterxml.jackson.annotation.JsonInclude", annotation -> {
+						annotation.attribute("value", Include.class, "Include.NON_NULL");
+					}));
+					typeDeclaration.addFieldDeclaration(javaFieldDeclaration);
+				
 				addFieldWithoutValue(typeDeclaration,"timeStamp", "java.lang.String");
 				addFieldWithoutValue(typeDeclaration,"exceptionMessage", "java.lang.String");
 				
@@ -623,13 +653,31 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				customizeGettersAndSetters(typeDeclaration, "java.lang.int", "id");
 				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorMessage");
 				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "errorCode");
-				customizeGettersAndSetters(typeDeclaration, "java.util.List<String>", "errors");
+				customizeGettersAndSetters(typeDeclaration, "List<String>", "errors");
 				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "timeStamp");
 				customizeGettersAndSetters(typeDeclaration, "java.lang.String", "exceptionMessage");
 
 			};
 		}	
 		
+		@Bean
+		ApiErrorCustomizer<JavaTypeDeclaration> apiErrorException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				constructorDeclarations(typeDeclaration, "ApiError", JavaProjectConstants.API_ERROR,
+						new Parameter("java.lang.int", "id"), 
+						new Parameter("java.lang.String", "errorMessage"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("List<String>", "errors"),
+						new Parameter("java.lang.String", "timeStamp"));
+				constructorDeclarations(typeDeclaration, "ApiError", JavaProjectConstants.API_ERROR,
+						new Parameter("java.lang.int", "id"), 
+						new Parameter("java.lang.String", "errorMessage"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "timeStamp"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+			};
+		}
 
 		@Bean
 		ApiErrorCustomizer<JavaTypeDeclaration> loadimportsforApiError() {
@@ -638,7 +686,6 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 				imports.add("java.util.List");
 				imports.add("com.fasterxml.jackson.annotation.JsonInclude");
 				imports.add("com.fasterxml.jackson.annotation.JsonInclude.Include");
-				imports.remove("java.util.List<String>");
 				t.setImports(imports);
 			};
 		}
@@ -672,6 +719,43 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 
 			};
 		}	
+		
+		@Bean
+		BaseExceptionCustomizer<JavaTypeDeclaration> baseException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				constructorDeclarations(typeDeclaration, "BaseException", JavaProjectConstants.BASE_EXCEPTION,
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "BaseException", JavaProjectConstants.BASE_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"),
+						new Parameter("java.lang.String", "timeStamp"));
+				constructorDeclarations(typeDeclaration, "BaseException", JavaProjectConstants.BASE_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "exceptionMessage"),
+						new Parameter("java.lang.String", "timeStamp"));
+				constructorDeclarations(typeDeclaration, "BaseException", JavaProjectConstants.BASE_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "BaseException", JavaProjectConstants.BASE_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"));
+				JavaConstructorDeclaration configure = JavaConstructorDeclaration.constructor("BaseException")
+						.modifiers(Modifier.PUBLIC)
+						.parameters(new Parameter("java.lang.String", "errorCode"), 
+								new Parameter("java.lang.String", "exceptionMessage"))
+						.body(new JavaHardCodeExpression());
+				configure.setFeatureName(JavaProjectConstants.BASE_EXCEPTION);
+				typeDeclaration.addConstructorDeclaration(configure);
+
+			};
+		}
 		
 		@Bean
 		BaseExceptionCustomizer<JavaTypeDeclaration> loadimportsforBaseException() {
@@ -715,6 +799,39 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 		}	
 		
 		@Bean
+		BusinessExceptionCustomizer<JavaTypeDeclaration> businessException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				constructorDeclarations(typeDeclaration, "BusinessException", JavaProjectConstants.BUSINESS_EXCEPTION,
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "BusinessException", JavaProjectConstants.BUSINESS_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"),
+						new Parameter("java.lang.String", "timeStamp"));
+				constructorDeclarations(typeDeclaration, "BusinessException", JavaProjectConstants.BUSINESS_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "BusinessException", JavaProjectConstants.BUSINESS_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "BusinessException", JavaProjectConstants.BUSINESS_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"));
+				constructorDeclarations(typeDeclaration, "BusinessException", JavaProjectConstants.BUSINESS_EXCEPTION,
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+
+			};
+		}
+		
+		@Bean
 		BusinessExceptionCustomizer<JavaTypeDeclaration> loadimportsforBusinessException() {
 			return (t) ->{
 				Set<String> imports = new HashSet<>();
@@ -753,6 +870,39 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 
 			};
 		}	
+		
+		@Bean
+		ApplicationExceptionCustomizer<JavaTypeDeclaration> applicationException(
+				ProjectDescription description) {
+			return (typeDeclaration) -> {
+				constructorDeclarations(typeDeclaration, "ApplicationException", JavaProjectConstants.APPLICATION_EXCEPTION,
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "ApplicationException", JavaProjectConstants.APPLICATION_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"),
+						new Parameter("java.lang.String", "timeStamp"));
+				constructorDeclarations(typeDeclaration, "ApplicationException", JavaProjectConstants.APPLICATION_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "ApplicationException", JavaProjectConstants.APPLICATION_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "errorModule"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+				constructorDeclarations(typeDeclaration, "ApplicationException", JavaProjectConstants.APPLICATION_EXCEPTION,
+						new Parameter("org.springframework.http.HttpStatus", "httpStatus"),
+						new Parameter("java.lang.String", "errorCode"));
+				constructorDeclarations(typeDeclaration, "ApplicationException", JavaProjectConstants.APPLICATION_EXCEPTION,
+						new Parameter("java.lang.String", "errorCode"), 
+						new Parameter("java.lang.String", "exceptionMessage"));
+
+			};
+		}
 		
 		@Bean
 		ApplicationExceptionCustomizer<JavaTypeDeclaration> loadimportsforApplicationException() {

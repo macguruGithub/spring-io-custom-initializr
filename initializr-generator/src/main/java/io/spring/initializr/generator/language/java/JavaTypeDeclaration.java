@@ -35,6 +35,8 @@ public class JavaTypeDeclaration extends TypeDeclaration {
 
 	private final List<JavaMethodDeclaration> methodDeclarations = new ArrayList<>();
 	
+	private final List<JavaConstructorDeclaration> constructorDeclarations = new ArrayList<>();
+	
 	private List<JavaStaticClassDeclaration> staticClassDeclaration;
 
 	JavaTypeDeclaration(String name) {
@@ -63,6 +65,14 @@ public class JavaTypeDeclaration extends TypeDeclaration {
 
 	public List<JavaMethodDeclaration> getMethodDeclarations() {
 		return this.methodDeclarations;
+	}
+	
+	public void addConstructorDeclaration(JavaConstructorDeclaration constructorDeclaration) {
+		this.constructorDeclarations.add(constructorDeclaration);
+	}
+
+	public List<JavaConstructorDeclaration> getConstructorDeclarations() {
+		return this.constructorDeclarations;
 	}
 
 	public List<JavaStaticClassDeclaration> getStaticClassDeclaration() {
