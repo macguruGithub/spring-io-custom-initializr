@@ -380,7 +380,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 		}
 		
 		@Bean
-		 RedisCustomizer<JavaTypeDeclaration> loadimports() {
+		 RedisCustomizer<JavaTypeDeclaration> loadimportsForRedis() {
 			return (t) ->{
 				Set<String> imports = new HashSet<>();
 				imports.add("java.time.Duration");
@@ -501,7 +501,7 @@ class JavaProjectGenerationDefaultContributorsConfiguration {
 		}		
 		
 		@Bean
-		MessageSourceUtilCustomizer<JavaTypeDeclaration> loadimports() {
+		MessageSourceUtilCustomizer<JavaTypeDeclaration> loadimportsForMessageSourceUtil() {
 			return (t) ->{
 				Set<String> imports = new HashSet<>();
 				imports.add("org.springframework.context.MessageSource");
