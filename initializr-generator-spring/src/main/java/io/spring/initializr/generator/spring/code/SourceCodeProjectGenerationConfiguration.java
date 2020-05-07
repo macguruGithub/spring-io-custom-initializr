@@ -123,7 +123,7 @@ public class SourceCodeProjectGenerationConfiguration {
 		@Bean
 		SwaggerContributor swaggerContributor(
 				ObjectProvider<SwaggerCustomizer<?>> swaggerCustomizers) {
-			return new SwaggerContributor(this.description.getPackageName(),
+			return new SwaggerContributor(this.description.getPackageName() + ".swagger",
 					"org.springframework.web.servlet.config.annotation.WebMvcConfigurer", swaggerCustomizers);
 		}
 
@@ -142,7 +142,7 @@ public class SourceCodeProjectGenerationConfiguration {
 		@Bean
 		RedisContributor redisContributor(
 				ObjectProvider<RedisCustomizer<?>> redisCustomizers) {
-			return new RedisContributor(this.description.getPackageName(),
+			return new RedisContributor(this.description.getPackageName() + ".redis",
 					"org.springframework.cache.annotation.CachingConfigurer", "org.springframework.cache.annotation.CachingConfigurerSupport", redisCustomizers);
 		}
 
@@ -161,7 +161,7 @@ public class SourceCodeProjectGenerationConfiguration {
 		@Bean
 		MessageSourceUtilContributor messageSourceUtilContributor(
 				ObjectProvider<MessageSourceUtilCustomizer<?>> messageSourceUtilCustomizers) {
-			return new MessageSourceUtilContributor(this.description.getPackageName(),
+			return new MessageSourceUtilContributor(this.description.getPackageName() + ".exception",
 					"org.springframework.context.MessageSourceAware", messageSourceUtilCustomizers);
 		}
 
@@ -169,14 +169,14 @@ public class SourceCodeProjectGenerationConfiguration {
 		@Bean
 		ExceptionConstantsContributor exceptionConstantsContributor(
 				ObjectProvider<ExceptionConstantsCustomizer<?>> exceptionConstantsCustomizers) {
-			return new ExceptionConstantsContributor(this.description.getPackageName(), exceptionConstantsCustomizers);
+			return new ExceptionConstantsContributor(this.description.getPackageName() + ".exception", exceptionConstantsCustomizers);
 		}
 		
 		// GlobalExceptionHandler
 		@Bean
 		GlobalExceptionHandlerContributor globalExceptionHandlerContributor(
 				ObjectProvider<GlobalExceptionHandlerCustomizer<?>> globalExceptionHandlerCustomizers) {
-			return new GlobalExceptionHandlerContributor(this.description.getPackageName(),
+			return new GlobalExceptionHandlerContributor(this.description.getPackageName() + ".exception",
 					"org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler", globalExceptionHandlerCustomizers);
 		}
 
@@ -184,14 +184,14 @@ public class SourceCodeProjectGenerationConfiguration {
 		@Bean
 		ApiErrorContributor apiErrorContributor(
 				ObjectProvider<ApiErrorCustomizer<?>> apiErrorCustomizers) {
-			return new ApiErrorContributor(this.description.getPackageName(), apiErrorCustomizers);
+			return new ApiErrorContributor(this.description.getPackageName() + ".exception", apiErrorCustomizers);
 		}
 		
 		// BaseException
 		@Bean
 		BaseExceptionContributor baseExceptionContributor(
 				ObjectProvider<BaseExceptionCustomizer<?>> baseExceptionCustomizers) {
-			return new BaseExceptionContributor(this.description.getPackageName(),
+			return new BaseExceptionContributor(this.description.getPackageName() + ".exception",
 					"java.lang.RuntimeException", baseExceptionCustomizers);
 		}
 		
@@ -199,7 +199,7 @@ public class SourceCodeProjectGenerationConfiguration {
 		@Bean
 		BusinessExceptionContributor businessExceptionContributor(
 				ObjectProvider<BusinessExceptionCustomizer<?>> businessExceptionCustomizers) {
-			return new BusinessExceptionContributor(this.description.getPackageName(),
+			return new BusinessExceptionContributor(this.description.getPackageName() + ".exception",
 					"BaseException", businessExceptionCustomizers);
 		}
 		
@@ -207,7 +207,7 @@ public class SourceCodeProjectGenerationConfiguration {
 		@Bean
 		ApplicationExceptionContributor applicationExceptionContributor(
 				ObjectProvider<ApplicationExceptionCustomizer<?>> applicationExceptionCustomizers) {
-			return new ApplicationExceptionContributor(this.description.getPackageName(),
+			return new ApplicationExceptionContributor(this.description.getPackageName() + ".exception",
 					"BaseException", applicationExceptionCustomizers);
 		}
 		
