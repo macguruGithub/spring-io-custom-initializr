@@ -344,6 +344,9 @@ public class JavaSourceCodeWriter implements SourceCodeWriter<JavaSourceCode> {
 		if("swagger".equalsIgnoreCase(method.getFeatureName())) {
 			writer.print(JavaHardCodeExpression.SwaggerData.data.get(method.getName()));
 		}
+		if("main".equalsIgnoreCase(method.getName())) {
+			writer.print(new JavaHardCodeExpression().getData().get(method.getName()));
+		}
 		if("redis".equalsIgnoreCase(method.getFeatureName())) {
 			writer.print(JavaHardCodeExpression.RedisData.data.get(method.getName()));
 		}
