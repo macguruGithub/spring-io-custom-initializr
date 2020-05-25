@@ -22,6 +22,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import io.spring.initializr.web.VO.DBTypeRequest;
 import io.spring.initializr.web.VO.DependancyList;
 import io.spring.initializr.web.VO.EnvironmentTypeRequest;
 
@@ -71,9 +72,19 @@ public class ProjectRequest {
 	
 	private EnvironmentTypeRequest envRequest;
 
+	private DBTypeRequest dbRequest;
+	
+	
+	
+	
+	public DBTypeRequest getDbRequest() {
+		return dbRequest;
+	}
 
-	
-	
+	public void setDbRequest(DBTypeRequest dbRequest) {
+		this.dbRequest = dbRequest;
+	}
+
 	public EnvironmentTypeRequest getEnvRequest() {
 		return envRequest;
 	}
