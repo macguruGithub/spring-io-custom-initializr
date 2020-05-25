@@ -25,6 +25,7 @@ import org.springframework.util.StringUtils;
 import io.spring.initializr.web.VO.DBTypeRequest;
 import io.spring.initializr.web.VO.DependancyList;
 import io.spring.initializr.web.VO.EnvironmentTypeRequest;
+import io.spring.initializr.web.VO.JenkinsRequest;
 
 
 /**
@@ -74,9 +75,16 @@ public class ProjectRequest {
 
 	private DBTypeRequest dbRequest;
 	
+	private JenkinsRequest jenkinRequest;
 	
-	
-	
+	public JenkinsRequest getJenkinRequest() {
+		return jenkinRequest;
+	}
+
+	public void setJenkinRequest(JenkinsRequest jenkinRequest) {
+		this.jenkinRequest = jenkinRequest;
+	}
+
 	public DBTypeRequest getDbRequest() {
 		return dbRequest;
 	}
