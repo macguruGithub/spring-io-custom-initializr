@@ -1,2 +1,1 @@
-./mvnw spring-javaformat:apply
-./mvnw install
+./mvnw install -DskipTests

@@ -19,13 +19,19 @@ package io.spring.initializr.web.project;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import io.spring.initializr.web.VO.DependancyList;
+import io.spring.initializr.web.VO.EnvironmentTypeRequest;
+
 
 /**
  * The base settings of a project request. Only these can be bound by user's input.
  *
  * @author Stephane Nicoll
  */
+@Component
 public class ProjectRequest {
 
 	private List<String> dependencies = new ArrayList<>();
@@ -56,6 +62,49 @@ public class ProjectRequest {
 
 	// The base directory to create in the archive - no baseDir by default
 	private String baseDir;
+	
+	private String repositoryType;
+	
+	private List<DependancyList> nexusDependencies;
+	
+	private List<String> otherDependencies;
+	
+	private EnvironmentTypeRequest envRequest;
+
+
+	
+	
+	public EnvironmentTypeRequest getEnvRequest() {
+		return envRequest;
+	}
+
+	public void setEnvRequest(EnvironmentTypeRequest envRequest) {
+		this.envRequest = envRequest;
+	}
+
+	public List<DependancyList> getNexusDependencies() {
+		return nexusDependencies;
+	}
+
+	public void setNexusDependencies(List<DependancyList> nexusDependencies) {
+		this.nexusDependencies = nexusDependencies;
+	}
+
+	public List<String> getOtherDependencies() {
+		return otherDependencies;
+	}
+
+	public void setOtherDependencies(List<String> otherDependencies) {
+		this.otherDependencies = otherDependencies;
+	}
+
+	public String getRepositoryType() {
+		return repositoryType;
+	}
+
+	public void setRepositoryType(String repositoryType) {
+		this.repositoryType = repositoryType;
+	}
 
 	public List<String> getDependencies() {
 		return this.dependencies;
