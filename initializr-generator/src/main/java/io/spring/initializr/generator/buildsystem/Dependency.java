@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import io.spring.initializr.generator.version.VersionReference;
+import sun.swing.StringUIClientPropertyKey;
 
 import org.springframework.util.Assert;
 
@@ -183,7 +184,8 @@ public class Dependency {
 		protected Builder(String groupId, String artifactId, String version) {
 			this.groupId = groupId;
 			this.artifactId = artifactId;
-			this.version = VersionReference.ofValue(version);
+			if(version != null && !"".equalsIgnoreCase(version))
+				this.version = VersionReference.ofValue(version);
 		}
 		
 		protected Builder(String groupId, String artifactId, String version, String systemPath) {

@@ -148,6 +148,7 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 	@ResponseBody
 	public ResponseEntity<byte[]> springCustomZip(@RequestBody R request) throws IOException {
 		
+		request.getDependencies().add("exception-id");
 		if("private".equalsIgnoreCase(request.getRepositoryType())) {
 			request.getDependencies().add("custom-id-nexus");
 		}
@@ -155,6 +156,19 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 		if(request.getJenkinRequest() != null && !StringUtils.isEmpty(request.getJenkinRequest().getApiName())) {
 			request.getDependencies().add("jenkins-scripts-id");
 		}
+		
+		if(request.getKubernetesRequest() != null && !StringUtils.isEmpty(request.getKubernetesRequest().getNamespace())) {
+			request.getDependencies().add("kube-script-id");
+		}
+		
+		if(request.getDbRequest() != null && !StringUtils.isEmpty(request.getDbRequest().getDbType())) {
+			request.getDependencies().add("db-id");
+		}
+		
+		if(request.getEnvRequest() != null && !StringUtils.isEmpty(request.getEnvRequest().getEnvTypeList().size()>0)) {
+			request.getDependencies().add("env-logback");
+		}
+		
 		projectRequest = request;
 		ProjectGenerationResult result = this.projectGenerationInvoker.invokeProjectStructureGeneration(request);
 		Path archive = createArchive(result, "zip", ZipArchiveOutputStream::new, ZipArchiveEntry::new,

@@ -227,8 +227,6 @@ public class MavenBuildWriter {
 			writeSingleElement(writer, "artifactId", dependency.getArtifactId());
 			writeSingleElement(writer, "version", determineVersion(dependency.getVersion()));
 			writeSingleElement(writer, "scope", scopeForType(dependency.getScope()));
-			if("ojdbc6".equals(dependency.getArtifactId()))
-				writeSingleElement(writer, "systemPath", "${project.basedir}/lib/ojdbc6-11.2.0.3.jar");
 			writeSingleElement(writer, "classifier", dependency.getClassifier());
 			if (isOptional(dependency)) {
 				writeSingleElement(writer, "optional", Boolean.toString(true));

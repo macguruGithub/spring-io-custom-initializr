@@ -26,6 +26,7 @@ import io.spring.initializr.web.VO.DBTypeRequest;
 import io.spring.initializr.web.VO.DependancyList;
 import io.spring.initializr.web.VO.EnvironmentTypeRequest;
 import io.spring.initializr.web.VO.JenkinsRequest;
+import io.spring.initializr.web.VO.KubernetesRequest;
 
 
 /**
@@ -77,6 +78,18 @@ public class ProjectRequest {
 	
 	private JenkinsRequest jenkinRequest;
 	
+	private KubernetesRequest kubernetesRequest;
+	
+	
+	
+	public KubernetesRequest getKubernetesRequest() {
+		return kubernetesRequest;
+	}
+
+	public void setKubernetesRequest(KubernetesRequest kubernetesRequest) {
+		this.kubernetesRequest = kubernetesRequest;
+	}
+
 	public JenkinsRequest getJenkinRequest() {
 		return jenkinRequest;
 	}

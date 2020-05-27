@@ -1,10 +1,29 @@
 package io.spring.initializr.web.VO;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+@JsonInclude(Include.NON_NULL)
 public class DependancyList {
 
 	private String id;
 	private String name;
 	private String description;
+	private String version;
+	public DependancyList() {}
+	
+	public DependancyList(String id, String name, String description, String version) {
+			this.name = name;
+			this.description = description;
+			this.id = id;
+			this.version = version;
+	}
+
+	public DependancyList(String id, String name, String description) {
+		this.id = id;
+		this.name = name;
+		this.description = description;
+	}
 
 	public String getId() {
 		return id;
@@ -28,6 +47,14 @@ public class DependancyList {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
 	}
 
 }
