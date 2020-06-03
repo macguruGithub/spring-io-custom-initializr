@@ -45,6 +45,8 @@ public class VersionParser {
 	/**
 	 * The default {@link VersionParser}.
 	 */
+	
+	public static String version = "1.0.5.RELEASE";
 	public static final VersionParser DEFAULT = new VersionParser(Collections.emptyList());
 
 	private static final Pattern VERSION_REGEX = Pattern
@@ -67,6 +69,7 @@ public class VersionParser {
 	 * @see #safeParse(java.lang.String)
 	 */
 	public Version parse(String text) {
+		text = version;
 		Assert.notNull(text, "Text must not be null");
 		Matcher matcher = VERSION_REGEX.matcher(text.trim());
 		if (!matcher.matches()) {

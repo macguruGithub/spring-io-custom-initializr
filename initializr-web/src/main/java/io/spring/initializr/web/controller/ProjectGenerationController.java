@@ -45,6 +45,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,6 +58,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import io.spring.initializr.generator.buildsystem.BuildSystem;
 import io.spring.initializr.generator.buildsystem.maven.MavenBuildSystem;
 import io.spring.initializr.generator.project.ProjectDescription;
+import io.spring.initializr.generator.version.VersionParser;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.metadata.InitializrMetadataProvider;
 import io.spring.initializr.web.project.InvalidProjectRequestException;
@@ -71,6 +73,7 @@ import io.spring.initializr.web.project.ProjectRequest;
  * @author Stephane Nicoll
  */
 @Controller
+@CrossOrigin("*")
 public abstract class ProjectGenerationController<R extends ProjectRequest> {
 
 	@Autowired
@@ -147,7 +150,7 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 	@RequestMapping(value="custom/starter.zip", method=RequestMethod.POST)
 	@ResponseBody
 	public ResponseEntity<byte[]> springCustomZip(@RequestBody R request) throws IOException {
-		
+		VersionParser.version = request.getBootVersion();
 		request.getDependencies().add("exception-id");
 		if("private".equalsIgnoreCase(request.getRepositoryType())) {
 			request.getDependencies().add("custom-id-nexus");
@@ -165,7 +168,7 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 			request.getDependencies().add("db-id");
 		}
 		
-		if(request.getEnvRequest() != null && !StringUtils.isEmpty(request.getEnvRequest().getEnvTypeList().size()>0)) {
+		if(request.getEnvRequest() != null && request.getEnvRequest().getEnvTypeList().size()>0) {
 			request.getDependencies().add("env-logback");
 		}
 		
@@ -173,7 +176,7 @@ public abstract class ProjectGenerationController<R extends ProjectRequest> {
 		ProjectGenerationResult result = this.projectGenerationInvoker.invokeProjectStructureGeneration(request);
 		Path archive = createArchive(result, "zip", ZipArchiveOutputStream::new, ZipArchiveEntry::new,
 				ZipArchiveEntry::setUnixMode);
-		resp.addHeader("Access-Control-Allow-Origin", "*");
+		//resp.addHeader("Access-Control-Allow-Origin", "*");
 		return upload(archive, result.getRootDirectory(), generateFileName(request, "zip"), "application/zip");
 	}
 
